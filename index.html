@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inversiones Sierra Dorotea</title>
+    <meta name="description" content="Control financiero local para proyecto inmobiliario - Inversiones Sierra Dorotea." />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="app-header">
+        <div class="brand" aria-label="Marca">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-title">
+            <strong>Inversiones Sierra Dorotea</strong>
+            <span>Control financiero del proyecto</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="btnResetDemo" class="btn danger" type="button" title="Borra datos locales del navegador">
+            Reset local
+          </button>
+        </div>
+      </header>
+
+      <section class="panel collapsible-section" data-section-id="dashboard" style="margin-top: 16px;">
+        <div class="panel-header">
+          <button class="section-toggle" type="button" aria-expanded="true">
+            <span class="section-toggle-icon" aria-hidden="true">▼</span>
+            <div>
+              <h2>Dashboard (ETAPA 2)</h2>
+              <p>Métricas operativas del proyecto; comparativas entre socios irán en una sección aparte más adelante.</p>
+            </div>
+          </button>
+          <span class="tag muted">Vivo</span>
+        </div>
+        <div class="panel-body section-content">
+          <div class="dashboard-rows">
+            <div class="dashboard-row dashboard-row--tre">
+              <div class="metric">
+                <div class="label">Caja actual del proyecto</div>
+                <div id="metricCajaActual" class="value">$0</div>
+              </div>
+              <div class="metric">
+                <div class="label">Ingresos / capital total</div>
+                <div id="metricIngresosCapitalTotal" class="value">$0</div>
+              </div>
+              <div class="metric">
+                <div class="label">Gastos totales del proyecto</div>
+                <div id="metricGastosTotales" class="value">$0</div>
+              </div>
+            </div>
+            <div class="dashboard-row dashboard-row--cuatro">
+              <div class="metric">
+                <div class="label">Aporte capital Gabriel</div>
+                <div id="metricAporteCapitalGabriel" class="value">$0</div>
+              </div>
+              <div class="metric">
+                <div class="label">Aporte capital Vania</div>
+                <div id="metricAporteCapitalVania" class="value">$0</div>
+              </div>
+              <div class="metric">
+                <div class="label">Gasto asignado Gabriel</div>
+                <div id="metricGastoAsignadoGabriel" class="value">$0</div>
+              </div>
+              <div class="metric">
+                <div class="label">Gasto asignado Vania</div>
+                <div id="metricGastoAsignadoVania" class="value">$0</div>
+              </div>
+            </div>
+          </div>
+          <div class="hint">Caja = ingresos − gastos. “Ingresos / capital total” es la suma de movimientos tipo ingreso. Los aportes de capital por socio vienen del reparto en esos ingresos; el gasto asignado viene del reparto en los gastos.</div>
+        </div>
+      </section>
+
+      <section class="panel collapsible-section" data-section-id="quickSummary" style="margin-top: 16px;">
+        <div class="panel-header">
+          <button class="section-toggle" type="button" aria-expanded="true">
+            <span class="section-toggle-icon" aria-hidden="true">▼</span>
+            <div>
+              <h2>Resumen rápido</h2>
+              <p>Indicadores de lectura rápida (se actualizan automáticamente).</p>
+            </div>
+          </button>
+          <span class="tag muted">ETAPA 2</span>
+        </div>
+        <div class="panel-body section-content">
+          <div id="quickSummary" class="quick-summary"></div>
+          <div id="quickSummaryEmpty" class="hint" style="display:none;">Aún no hay datos suficientes para el resumen.</div>
+        </div>
+      </section>
+
+      <section class="panel collapsible-section" data-section-id="charts" style="margin-top: 16px;">
+        <div class="panel-header">
+          <button class="section-toggle" type="button" aria-expanded="true">
+            <span class="section-toggle-icon" aria-hidden="true">▼</span>
+            <div>
+              <h2>Gráficos</h2>
+              <p>Gasto mensual, gasto por categoría y flujo de caja mensual (Chart.js).</p>
+            </div>
+          </button>
+          <span class="tag muted">ETAPA 2</span>
+        </div>
+        <div class="panel-body section-content">
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="panel-header" style="border:none;padding:0 0 10px 0;">
+                <div>
+                  <h2>Gasto mensual</h2>
+                  <p>Solo movimientos tipo gasto.</p>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartGastoMensual"></canvas>
+                <div id="chartGastoMensualEmpty" class="hint" style="display:none;">Sin datos de gastos para graficar.</div>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="panel-header" style="border:none;padding:0 0 10px 0;">
+                <div>
+                  <h2>Gasto por categoría</h2>
+                  <p>Top categorías por gasto.</p>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartGastoCategoria"></canvas>
+                <div id="chartGastoCategoriaEmpty" class="hint" style="display:none;">Sin datos de gastos para graficar.</div>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="panel-header" style="border:none;padding:0 0 10px 0;">
+                <div>
+                  <h2>Flujo de caja mensual</h2>
+                  <p>Ingresos, gastos y saldo acumulado por mes.</p>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chartFlujoCaja"></canvas>
+                <div id="chartFlujoCajaEmpty" class="hint" style="display:none;">Sin datos de flujo de caja.</div>
+              </div>
+            </div>
+          </div>
+          <div class="hint">El flujo de caja mensual muestra ingresos, gastos y saldo acumulado (por mes).</div>
+        </div>
+      </section>
+
+      <section class="panel collapsible-section ai-assistant-section" data-section-id="aiAssistant" style="margin-top: 16px;">
+        <div class="panel-header">
+          <button class="section-toggle" type="button" aria-expanded="true">
+            <span class="section-toggle-icon" aria-hidden="true">▼</span>
+            <div>
+              <h2>Asistente IA</h2>
+              <p>Fase IA 1 local: parser determinístico + consultas locales. No usa APIs externas ni API keys.</p>
+            </div>
+          </button>
+          <span class="tag muted">Fase IA 1</span>
+        </div>
+        <div class="panel-body section-content">
+          <label>
+            Instrucción / pregunta
+            <textarea
+              id="aiInput"
+              placeholder="Ej: Registra un gasto de 1.000.000 el 10 de mayo 2026 pagado 50/50 desde caja del proyecto al abogado por permisos legales, transferencia, estado pagado"
+              style="min-height: 110px;"
+            ></textarea>
+          </label>
+
+          <div class="form-actions" style="margin-top: 10px;">
+            <button id="btnAiAnalyze" class="btn primary" type="button">Analizar</button>
+            <button id="btnAiLoadDraft" class="btn" type="button" disabled>Cargar borrador al formulario</button>
+            <span id="aiIntentTag" class="tag muted" style="margin-left:auto;">Listo</span>
+          </div>
+
+          <div id="aiResponse" class="hint" style="margin-top: 10px; white-space: pre-wrap; display:none;"></div>
+
+          <div class="row" style="margin-top: 12px;">
+            <div style="flex:1;">
+              <div class="label" style="margin-bottom: 8px;">Campos obligatorios faltantes</div>
+              <div id="aiMissingRequired" class="hint" style="white-space: pre-wrap;">—</div>
+            </div>
+            <div style="flex:1;">
+              <div class="label" style="margin-bottom: 8px;">Campos opcionales faltantes</div>
+              <div id="aiMissingOptional" class="hint" style="white-space: pre-wrap;">—</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <div class="label" style="margin-bottom: 8px;">Vista previa del movimiento (borrador)</div>
+            <div id="aiPreview" class="panel" style="box-shadow:none; border-radius: 12px; padding: 12px; white-space: pre-wrap;">—</div>
+            <div class="hint" style="margin-top: 8px;">
+              Importante: “Cargar borrador” solo rellena el formulario. Para guardar debes usar “Guardar movimiento” y confirmar con PIN.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main class="grid">
+        <section class="panel collapsible-section" data-section-id="movementForm">
+          <div class="panel-header">
+            <button class="section-toggle" type="button" aria-expanded="true">
+              <span class="section-toggle-icon" aria-hidden="true">▼</span>
+              <div>
+                <h2>Registro de movimiento</h2>
+                <p>Nuevo movimiento: validación del formulario y luego confirmación con PIN. Para editar o eliminar usa la tabla.</p>
+              </div>
+            </button>
+            <span id="movementsCountTag" class="tag muted">0 movimientos</span>
+          </div>
+          <div class="panel-body section-content">
+            <form id="movementForm" autocomplete="off" novalidate>
+              <div class="row">
+                <label>
+                  Tipo
+                  <!-- Fase posterior: filtrar categorías sugeridas según tipo (ej. priorizar &quot;Aportes / Capital&quot; en Ingreso). -->
+                  <select id="tipo" name="tipo">
+                    <option value="gasto" selected>Gasto</option>
+                    <option value="ingreso">Ingreso</option>
+                    <option value="ajuste">Ajuste</option>
+                  </select>
+                </label>
+                <label>
+                  Fecha
+                  <input id="fecha" name="fecha" type="date" />
+                </label>
+              </div>
+
+              <div class="row">
+                <label>
+                  Categoría
+                  <select id="categoria" name="categoria"></select>
+                </label>
+                <label>
+                  Subcategoría
+                  <select id="subcategoria" name="subcategoria"></select>
+                </label>
+              </div>
+
+              <div class="row">
+                <label>
+                  Descripción (opcional)
+                  <input id="descripcion" name="descripcion" type="text" placeholder="Ej: Compra de cemento" maxlength="160" />
+                </label>
+                <label>
+                  Monto total (CLP)
+                  <input id="montoTotal" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej: 1.000.000" />
+                </label>
+              </div>
+
+              <div class="row">
+                <label>
+                  Reparto del gasto/ingreso
+                  <select id="reparto" name="reparto">
+                    <option value="gabriel">100% Gabriel</option>
+                    <option value="vania">100% Vania</option>
+                    <option value="ambos" selected>50% / 50%</option>
+                  </select>
+                </label>
+                <label>
+                  Cuenta / medio de salida
+                  <select id="cuentaMedioSalida" name="cuentaMedioSalida">
+                    <option value="Caja del proyecto" selected>Caja del proyecto</option>
+                    <option value="Cuenta Gabriel">Cuenta Gabriel</option>
+                    <option value="Cuenta Vania">Cuenta Vania</option>
+                    <option value="Efectivo Gabriel">Efectivo Gabriel</option>
+                    <option value="Efectivo Vania">Efectivo Vania</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="row">
+                <label>
+                  Origen
+                  <input id="origen" name="origen" type="text" placeholder="Ej: Banco / Efectivo / Caja" />
+                </label>
+                <label>
+                  Destino
+                  <input id="destino" name="destino" type="text" placeholder="Ej: Proveedor / Obra" />
+                </label>
+              </div>
+
+              <div class="row">
+                <label>
+                  Proveedor
+                  <input id="proveedor" name="proveedor" type="text" placeholder="Ej: Ferretería X" />
+                </label>
+                <label>
+                  Nº documento
+                  <input id="numeroDocumento" name="numeroDocumento" type="text" placeholder="Ej: Factura/Boleta" />
+                </label>
+              </div>
+
+              <div class="row">
+                <label>
+                  Estado
+                  <select id="estado" name="estado">
+                    <option value="pagado" selected>Pagado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="anulado">Anulado</option>
+                  </select>
+                </label>
+                <label>
+                  Método de pago
+                  <select id="metodoPago" name="metodoPago" required>
+                    <option value="">Selecciona método</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Pago con tarjeta">Pago con tarjeta</option>
+                    <option value="Efectivo">Efectivo</option>
+                  </select>
+                </label>
+              </div>
+
+              <label style="margin-top: 10px;">
+                Notas
+                <textarea id="notas" name="notas" placeholder="Opcional"></textarea>
+              </label>
+
+              <label style="margin-top: 10px;">
+                Comprobante (opcional)
+                <input
+                  type="file"
+                  id="comprobante"
+                  name="comprobante"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf"
+                />
+                <div class="hint">PDF o imagen. Se almacena en IndexedDB (no en localStorage).</div>
+              </label>
+
+              <div id="formError" class="error" style="display:none;"></div>
+
+              <div class="form-actions">
+                <button id="btnClearForm" class="btn" type="button">Limpiar</button>
+                <button class="btn primary" type="submit">Guardar movimiento</button>
+              </div>
+
+              <div class="hint">
+                Comprobantes (imagen/PDF) se integran en ETAPA 3. Exportación Excel en ETAPA 4.
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel collapsible-section" data-section-id="movements">
+          <div class="panel-header">
+            <button class="section-toggle" type="button" aria-expanded="true">
+              <span class="section-toggle-icon" aria-hidden="true">▼</span>
+              <div>
+                <h2>Movimientos</h2>
+                <p>Listado persistido en el navegador (ETAPA 1).</p>
+              </div>
+            </button>
+            <div class="header-actions">
+              <button id="btnOpenAudit" class="btn" type="button">Ver historial de acciones</button>
+              <button id="btnExportExcel" class="btn" type="button">Exportar Excel</button>
+              <span id="movementsFilteredCount" class="tag muted">Mostrando 0 de 0</span>
+              <span id="lastSavedTag" class="tag muted">Sin cambios</span>
+            </div>
+          </div>
+          <div class="panel-body section-content">
+            <div class="panel" style="border-radius: 12px; box-shadow: none; margin-bottom: 12px;">
+              <div class="panel-header" style="border-radius: 12px 12px 0 0;">
+                <div>
+                  <h2>Filtros de movimientos</h2>
+                  <p>En esta etapa afectan solo la tabla (no el dashboard ni gráficos).</p>
+                </div>
+                <span class="tag muted">ETAPA 2.5</span>
+              </div>
+              <div class="panel-body">
+                <form id="filtersForm" autocomplete="off" novalidate>
+                  <div class="row">
+                    <label>
+                      Fecha desde
+                      <input id="filterDateFrom" type="date" />
+                    </label>
+                    <label>
+                      Fecha hasta
+                      <input id="filterDateTo" type="date" />
+                    </label>
+                  </div>
+
+                  <div class="row" style="margin-top:10px;">
+                    <label>
+                      Tipo
+                      <select id="filterTipo">
+                        <option value="all" selected>Todos</option>
+                        <option value="ingreso">Ingreso</option>
+                        <option value="gasto">Gasto</option>
+                        <option value="ajuste">Ajuste</option>
+                      </select>
+                    </label>
+                    <label>
+                      Socio / reparto
+                      <select id="filterReparto">
+                        <option value="all" selected>Todos</option>
+                        <option value="gabriel">Gabriel</option>
+                        <option value="vania">Vania</option>
+                        <option value="ambos">50/50</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div class="row" style="margin-top:10px;">
+                    <label>
+                      Categoría
+                      <select id="filterCategoria"></select>
+                    </label>
+                    <label>
+                      Subcategoría
+                      <select id="filterSubcategoria"></select>
+                    </label>
+                  </div>
+
+                  <div class="row" style="margin-top:10px;">
+                    <label>
+                      Estado
+                      <select id="filterEstado">
+                        <option value="all" selected>Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="reembolsado">Reembolsado</option>
+                        <option value="anulado">Anulado</option>
+                      </select>
+                    </label>
+                    <label>
+                      Método de pago
+                      <select id="filterMetodoPago">
+                        <option value="all" selected>Todos</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Pago con tarjeta">Pago con tarjeta</option>
+                        <option value="Efectivo">Efectivo</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label style="margin-top:10px;">
+                    Búsqueda libre
+                    <input id="filterSearchText" type="text" placeholder="Buscar en descripción, proveedor, origen, destino, documento, notas..." />
+                  </label>
+
+                  <div class="form-actions">
+                    <button id="btnApplyFilters" class="btn primary" type="submit">Aplicar filtros</button>
+                    <button id="btnClearFilters" class="btn" type="button">Limpiar filtros</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table aria-label="Tabla de movimientos">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th class="mono">Monto</th>
+                    <th class="mono">Gabriel</th>
+                    <th class="mono">Vania</th>
+                    <th>Medio salida</th>
+                    <th>Estado</th>
+                    <th>Comprobante</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="movementsTbody">
+                  <tr>
+                    <td colspan="11" class="tag muted" style="border: none; margin: 10px;">
+                      Aún no hay movimientos. Registra el primero desde el formulario.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Modal PIN (crear / editar / eliminar) -->
+    <div id="modalPin" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalPinTitle">
+        <h3 id="modalPinTitle">Confirmar con PIN</h3>
+        <p id="modalPinSubtitle">Introduce el PIN del sistema para continuar.</p>
+        <label class="modal-pin-input">
+          <span class="label" style="display:block;color:var(--muted);font-size:12px;margin-bottom:6px;">PIN</span>
+          <input id="modalPinInput" type="password" inputmode="numeric" autocomplete="off" />
+        </label>
+        <div id="modalPinError" class="error" style="display:none;"></div>
+        <div class="modal-actions">
+          <button type="button" id="modalPinCancel" class="btn">Cancelar</button>
+          <button type="button" id="modalPinConfirm" class="btn primary">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmación eliminar -->
+    <div id="modalConfirmDelete" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog" role="dialog" aria-modal="true">
+        <h3>Eliminar movimiento</h3>
+        <p>¿Seguro que deseas eliminar este movimiento?</p>
+        <div class="modal-actions">
+          <button type="button" id="modalConfirmDeleteNo" class="btn">Cancelar</button>
+          <button type="button" id="modalConfirmDeleteYes" class="btn danger">Sí, eliminar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial de acciones (auditoría) -->
+    <div id="modalAudit" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog modal-dialog--wide" role="dialog" aria-modal="true">
+        <h3>Historial de acciones</h3>
+        <p>Últimos eventos (crear/editar/eliminar). Persisten aunque el movimiento se elimine.</p>
+        <div class="table-wrap">
+          <table aria-label="Historial de acciones">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Acción</th>
+                <th>Usuario</th>
+                <th>Detalle</th>
+                <th class="mono">Movimiento</th>
+              </tr>
+            </thead>
+            <tbody id="auditModalTbody">
+              <tr>
+                <td colspan="5" class="tag muted" style="border: none; margin: 10px;">
+                  No hay acciones registradas.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btnCloseAudit" class="btn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal editar movimiento -->
+    <div id="modalEditMovement" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog modal-dialog--wide" role="dialog" aria-modal="true">
+        <h3>Editar movimiento</h3>
+        <p id="modalEditHint" style="margin-bottom:14px;color:var(--muted);font-size:13px;"></p>
+        <form id="editMovementForm" autocomplete="off" novalidate>
+          <div class="row">
+            <label>
+              Tipo
+              <select id="edit_tipo" name="tipo">
+                <option value="gasto">Gasto</option>
+                <option value="ingreso">Ingreso</option>
+                <option value="ajuste">Ajuste</option>
+              </select>
+            </label>
+            <label>
+              Fecha
+              <input id="edit_fecha" name="fecha" type="date" />
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Categoría
+              <select id="edit_categoria" name="categoria"></select>
+            </label>
+            <label>
+              Subcategoría
+              <select id="edit_subcategoria" name="subcategoria"></select>
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Descripción (opcional)
+              <input id="edit_descripcion" name="descripcion" type="text" maxlength="160" />
+            </label>
+            <label>
+              Monto total (CLP)
+              <input id="edit_montoTotal" type="text" inputmode="numeric" autocomplete="off" />
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Reparto del gasto/ingreso
+              <select id="edit_reparto" name="reparto">
+                <option value="gabriel">100% Gabriel</option>
+                <option value="vania">100% Vania</option>
+                <option value="ambos">50% / 50%</option>
+              </select>
+            </label>
+            <label>
+              Cuenta / medio de salida
+              <select id="edit_cuentaMedioSalida" name="cuentaMedioSalida">
+                <option value="Caja del proyecto">Caja del proyecto</option>
+                <option value="Cuenta Gabriel">Cuenta Gabriel</option>
+                <option value="Cuenta Vania">Cuenta Vania</option>
+                <option value="Efectivo Gabriel">Efectivo Gabriel</option>
+                <option value="Efectivo Vania">Efectivo Vania</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Origen
+              <input id="edit_origen" name="origen" type="text" />
+            </label>
+            <label>
+              Destino
+              <input id="edit_destino" name="destino" type="text" />
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Proveedor
+              <input id="edit_proveedor" name="proveedor" type="text" />
+            </label>
+            <label>
+              Nº documento
+              <input id="edit_numeroDocumento" name="numeroDocumento" type="text" />
+            </label>
+          </div>
+          <div class="row">
+            <label>
+              Estado
+              <select id="edit_estado" name="estado">
+                <option value="pagado">Pagado</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="anulado">Anulado</option>
+              </select>
+            </label>
+            <label>
+              Método de pago
+              <select id="edit_metodoPago" name="metodoPago">
+                <option value="">Selecciona método</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Pago con tarjeta">Pago con tarjeta</option>
+                <option value="Efectivo">Efectivo</option>
+              </select>
+            </label>
+          </div>
+          <label style="margin-top: 10px;">
+            Notas
+            <textarea id="edit_notas" name="notas"></textarea>
+          </label>
+
+          <div class="panel" style="border-radius: 12px; box-shadow:none; margin-top: 12px;">
+            <div class="panel-header" style="border-radius: 12px 12px 0 0;">
+              <div>
+                <h2>Comprobante</h2>
+                <p>Subir, reemplazar o eliminar comprobante (IndexedDB).</p>
+              </div>
+              <span class="tag muted">ETAPA 3B</span>
+            </div>
+            <div class="panel-body">
+              <div id="edit_attachmentStatus" class="hint">Sin comprobante.</div>
+              <label style="margin-top: 10px;">
+                Subir/reemplazar (opcional)
+                <input
+                  type="file"
+                  id="edit_comprobante"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf"
+                />
+              </label>
+              <label style="margin-top: 10px; flex-direction: row; align-items: center; gap: 10px;">
+                <input type="checkbox" id="edit_deleteComprobante" />
+                Eliminar comprobante existente
+              </label>
+              <div id="edit_attachmentError" class="error" style="display:none;"></div>
+            </div>
+          </div>
+          <div id="editFormError" class="error" style="display:none;"></div>
+          <div class="modal-actions" style="margin-top:14px;">
+            <button type="button" id="btnEditCancel" class="btn">Cancelar</button>
+            <button type="button" id="btnEditSave" class="btn primary">Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!--
+      Scripts clásicos (sin ES Modules) para máxima compatibilidad al abrir este archivo vía file:// en macOS (Safari/Chrome).
+      Orden importante: catálogo -> storage -> dominio -> reports -> seguridad -> app
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="./js/categories.js"></script>
+    <script src="./js/storage.js"></script>
+    <script src="./js/movements.js"></script>
+    <script src="./js/format.js"></script>
+    <script src="./js/filters.js"></script>
+    <script src="./js/reports.js"></script>
+    <script src="./js/charts.js"></script>
+    <script src="./js/ui-sections.js"></script>
+    <script src="./js/attachments.js"></script>
+    <script src="./js/security.js"></script>
+    <script src="./js/audit.js"></script>
+    <script src="./js/ai-assistant.js"></script>
+    <script src="./js/export-excel.js"></script>
+    <script src="./js/app.js"></script>
+  </body>
+</html>
+

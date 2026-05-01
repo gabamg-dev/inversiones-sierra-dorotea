@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Environment files (no subir secretos)
+.env
+.env.local
+.env.*.local
+
+# Node / Next (futuro)
+node_modules/
+.next/
+out/
+dist/
+
+# Logs
+*.log
+
+# Local editor
+.vscode/
+.idea/
+
