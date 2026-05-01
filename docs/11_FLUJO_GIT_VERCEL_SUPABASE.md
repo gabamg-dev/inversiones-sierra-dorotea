@@ -5,7 +5,31 @@ Definir un flujo simple y repetible para:
 - versionar cambios con Git,
 - publicar en GitHub,
 - desplegar automáticamente en Vercel,
-- conectar la app online a Supabase (Auth, Postgres, Storage).
+- conectar la app online a backend en nube.
+
+---
+
+## Actualización: backend elegido Firebase
+El flujo **Git → GitHub → Vercel** no cambia:
+- cada `git push` a `main` redeploya producción (y PR/branches pueden generar previews).
+
+Lo que sí cambia es el backend:
+- **Firebase Auth** (login)
+- **Firestore** (datos)
+- **Firebase Storage** (comprobantes)
+
+Guía principal: `docs/13_FIREBASE_ONLINE_IMPLEMENTACION.md`.
+
+> Nota sobre el nombre del archivo: este documento se creó cuando el plan inicial mencionaba Supabase. Se mantiene el nombre para no romper enlaces, pero el **backend actual** es Firebase.
+
+Comandos típicos:
+
+```bash
+git status
+git add .
+git commit -m "Prepare Firebase backend foundation"
+git push origin main
+```
 
 ---
 
@@ -76,11 +100,11 @@ En caso de fallas:
 ---
 
 ## Flujo Supabase (conexión)
-En ETAPA 6A **solo se define** el diseño:
-- esquema inicial: `supabase/schema.sql`
-- bucket privado propuesto: `comprobantes`
+### Legado / alternativa
+Si decides evaluar Supabase en el futuro, existe referencia histórica:
+- `supabase/schema.sql`
 
-La ejecución real (crear proyecto, aplicar SQL, RLS, buckets y políticas) se hace en fases posteriores.
+La ejecución real (si aplica) sería en una fase separada. Hoy el camino principal es Firebase.
 
 ---
 

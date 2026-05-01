@@ -7,30 +7,29 @@ Evolucionar desde una app local-first (HTML/JS + `localStorage` + `IndexedDB`) h
 - almacenamiento de comprobantes en nube,
 - auditoría y trazabilidad multiusuario.
 
-### Arquitectura futura (alto nivel)
-- **Frontend**: Next.js (UI moderna, rutas, SSR opcional).
-- **Router**: App Router (recomendado).
-- **Lenguaje**: TypeScript (recomendado).
-- **Auth**: Supabase Auth (login de socios, recuperación, MFA opcional).
-- **DB**: Supabase Postgres (movimientos, categorías, auditoría).
-- **Storage**: Supabase Storage (comprobantes PDF/imagen).
-- **Hosting**: Vercel.
--
-- **Deploy**: GitHub conectado a Vercel (push a `main` → producción; PR/branches → preview).
+### Arquitectura online (decisión actual): Vercel + GitHub + Firebase
+- **Hosting/Deploy**: Vercel (conectado a GitHub).
+- **Auth**: **Firebase Auth** (Gabriel/Vania).
+- **DB**: **Cloud Firestore** (movimientos, auditoría, metadata).
+- **Storage**: **Firebase Storage** (comprobantes PDF/imagen).
+- **IA (futuro)**: endpoint server-side (OpenAI/Gemini) sin API keys en frontend.
+
+### Supabase (alternativa / legado)
+- `supabase/schema.sql` y variables `SUPABASE_*` pueden mantenerse como referencia histórica.
+- **No** es el backend elegido en esta etapa del proyecto.
 
 ### Sitio privado (recomendación)
 - En producción, el sitio debe estar **protegido**:
-  - **Capa 1 (temporal)**: clave general de acceso (variable `SITE_ACCESS_PASSWORD`) o
-  - **Capa 2 (real)**: **login** con Supabase Auth (Gabriel/Vania) + RLS.
-- Opcional: agregar **middleware de Next.js** para bloquear rutas sin sesión válida.
+  - **Capa 1 (temporal)**: clave general de acceso (variable `SITE_ACCESS_PASSWORD`) o barrera en `js/access-gate.js` (sitio estático)
+  - **Capa 2 (real)**: **Firebase Auth** + reglas de seguridad (Firestore/Storage)
 
 ### Barrera temporal (sitio estático en Vercel)
-Mientras la app aún sea estática (antes de Supabase Auth), se puede usar una barrera simple de acceso:
+Mientras la app aún sea estática (antes de Firebase Auth completo), se puede usar una barrera simple de acceso:
 - módulo local: `js/access-gate.js`
 - clave por defecto: `112233` (solo temporal)
 - estado: `sessionStorage` (no sincroniza entre dispositivos)
 
-Esto **no reemplaza** Auth real. En Fase 6C debe migrarse a Supabase Auth + RLS.
+Esto **no reemplaza** Auth real. Debe migrarse a **Firebase Auth** + reglas.
 
 ### Modelo de datos (online)
 En online, el movimiento seguirá teniendo metadata del comprobante:
@@ -53,24 +52,24 @@ En nube, toda acción CREATE/UPDATE/DELETE debe registrar:
 La auditoría local actual (`audit.js`) es un placeholder útil para UI/UX, pero no reemplaza auditoría server-side.
 
 ### Estrategia de migración (pasos recomendados)
-1. Definir API/contratos: movimientos, auditoría, adjuntos.
+1. Definir contratos: movimientos, auditoría, adjuntos (Firestore + Storage).
 2. Migrar persistencia de movimientos:
-   - de `localStorage` → Postgres (con sync/backup).
+   - de `localStorage` → **Firestore** (con sync/backup e importación JSON).
 3. Migrar comprobantes:
-   - de IndexedDB → Storage remoto.
+   - de IndexedDB → **Firebase Storage**.
 4. Mantener compatibilidad:
    - permitir importación JSON desde versión local.
 5. Endurecer seguridad:
-   - signed URLs para descarga,
-   - reglas RLS (Row Level Security) en Postgres,
-   - políticas de Storage por usuario/proyecto.
+   - reglas **Firestore** (`firebase/firestore.rules`),
+   - reglas **Storage** (`firebase/storage.rules`),
+   - membresía explícita (`projectMembers/{uid}`) para acceso.
 
-### Storage (bucket recomendado)
-- Bucket privado: `comprobantes`
+### Storage (Firebase)
+- Bucket: usar el bucket del proyecto (ver `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`).
 - Estructura sugerida:
-  - `comprobantes/movements/{movement_id}/{attachment_id}-{safe_filename}`
+  - `comprobantes/{movementId}/{fileName}`
 - Acceso:
-  - Signed URLs o descarga server-side (evitar URLs públicas).
+  - Reglas privadas (ver `firebase/storage.rules`).
 
 ### Asistente IA (futuro)
 Para habilitar IA real sin exponer secretos:
@@ -78,7 +77,7 @@ Para habilitar IA real sin exponer secretos:
 - El frontend **nunca** debe contener `OPENAI_API_KEY` o `GEMINI_API_KEY`.
 - Las API keys deben vivir en **Vercel Environment Variables**.
 - El endpoint puede:
-  - consultar Supabase (Postgres) para contexto,
+  - consultar **Firestore** para contexto (según permisos),
   - generar respuestas/borradores con OpenAI o Gemini,
   - devolver un resultado estructurado (para que el usuario confirme antes de guardar).
 

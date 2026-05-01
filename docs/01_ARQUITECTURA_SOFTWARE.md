@@ -23,7 +23,11 @@ Mantener una base **profesional, escalable y modular**, separando UI, dominio y 
   - `reports.js`: cálculos agregados para dashboard (**caja**, **total ingresos/capital**, **gastos totales**, **aportes de capital por socio**, **gastos asignados por socio**). Métricas de **comparación o diferencia entre socios** no se muestran en el dashboard principal; quedarán para una futura sección **“Resumen entre socios”** (donde también podrá usarse `getDiferenciaAportesCapital` u otras agregaciones con texto explicativo).
   - `charts.js`: render de gráficos (Chart.js) y ciclo de vida (destroy/re-render).
   - `export-excel.js`: exportación Excel (ETAPA 4).
+  - `access-gate.js`: barrera temporal de acceso (sitio estático; no es seguridad real).
+  - `firebase-config.js`: placeholder de configuración Firebase (sin inicializar SDK).
+  - `firebase-service.js`: placeholder de servicio Firebase (sin SDK).
   - `email-placeholder.js`: contratos/funciones para integración futura (ETAPA 6).
+- `firebase/`: reglas de seguridad Firebase (Firestore/Storage) para la fase online.
 - `docs/`: documentación obligatoria del proyecto.
 - `assets/`: recursos estáticos y comprobantes.
 - `data/`: espacio reservado para respaldos/importaciones (ETAPA 5).
@@ -44,17 +48,18 @@ Para listar:
 - Se genera un `.xlsx` con varias hojas (resumen, movimientos, agregaciones y auditoría).
 - Los **comprobantes** no se incrustan: solo se exporta metadata (el blob real vive en IndexedDB).
 
-### Preparación migración online (ETAPA 6A)
-- Arquitectura objetivo:
-  - **Frontend**: Next.js (App Router) en Vercel, TypeScript recomendado.
-  - **Backend**: API routes / server actions (server-side) + Supabase server client.
-  - **Auth**: Supabase Auth (usuarios Gabriel/Vania).
-  - **DB**: Supabase Postgres (movimientos + auditoría).
-  - **Storage**: Supabase Storage (bucket privado `comprobantes`).
-  - **IA**: endpoint server-side `POST /api/ai-assistant` (OpenAI/Gemini) con keys solo en env del servidor.
-- Archivos guía (ETAPA 6A):
-  - `supabase/schema.sql` (propuesta inicial de tablas y sección RLS futura)
-  - `.env.example` (variables de entorno)
-  - `docs/11_FLUJO_GIT_VERCEL_SUPABASE.md`
+### Preparación migración online (Firebase + Vercel)
+- Arquitectura objetivo (decisión actual):
+  - **Deploy**: Vercel conectado a GitHub.
+  - **Auth**: Firebase Auth (Gabriel/Vania).
+  - **DB**: Cloud Firestore (movimientos + auditoría + metadata).
+  - **Storage**: Firebase Storage (comprobantes).
+  - **IA (futuro)**: endpoint server-side (OpenAI/Gemini) con keys solo en env del servidor.
+- Archivos guía:
+  - `firebase/firestore.rules`, `firebase/storage.rules`
+  - `.env.example` (incluye `NEXT_PUBLIC_FIREBASE_*`; `.env.local` ignorado)
+  - `docs/13_FIREBASE_ONLINE_IMPLEMENTACION.md`
+  - `docs/11_FLUJO_GIT_VERCEL_SUPABASE.md` (flujo Git/Vercel; nombre histórico)
   - `docs/12_ROADMAP_MIGRACION_ONLINE.md`
+  - `supabase/schema.sql` (legado / alternativa)
 

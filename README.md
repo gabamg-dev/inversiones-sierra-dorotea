@@ -20,6 +20,15 @@ Aplicación web local (HTML + CSS + JS) para controlar el flujo financiero de un
 2. Registrar un movimiento desde el formulario.
 3. Ver el movimiento en la tabla. La información queda persistida en el navegador vía `localStorage`.
 
+### Deploy (Vercel, sitio estático)
+El proyecto puede desplegarse como sitio estático en Vercel (GitHub → Vercel).
+- Hoy la app sigue siendo **local-first**: los datos se guardan en el navegador del visitante (`localStorage` + IndexedDB para comprobantes).
+- La sincronización multi-dispositivo llegará cuando se implemente **Firebase** (Firestore + Storage) y login real.
+
+Variables:
+- Usa `.env.example` como plantilla.
+- Crea `.env.local` en tu Mac para valores reales (Firebase) y **no lo subas** (está ignorado por `.gitignore`).
+
 El campo **monto** se escribe con **separador de miles** (puntos) en pantalla; al guardar se almacena como **número** sin formato.
 
 Las validaciones del formulario están centralizadas en `movements.js` (`validateMovementDraft`): campos obligatorios incluyen origen, destino y **método de pago** (lista desplegable). La **descripción** es opcional y puede guardarse vacía.
@@ -53,25 +62,29 @@ Las secciones principales (Dashboard, Resumen rápido, Gráficos, Registro de mo
 - Botón **“Exportar Excel”** genera un `.xlsx` con hojas de resumen, movimientos y agregaciones.
 - **No** incluye PDFs/imágenes: solo exporta metadata de comprobantes (id local, nombre, tipo y tamaño).
 
-### Preparación migración online (Vercel + Supabase + GitHub)
-Camino elegido (aún sin implementar Next.js/Supabase):
+### Preparación migración online (Vercel + GitHub + Firebase)
+Camino elegido para la versión online (en progreso; aún sin CRUD remoto completo):
 - **Git/GitHub** como repositorio fuente.
 - **Vercel** para despliegue (push a `main` → producción; PR/branches → preview).
-- **Supabase** para **Auth + Postgres + Storage** (bucket privado `comprobantes`).
+- **Firebase** para **Auth + Firestore + Storage**.
 - Sitio privado por capas:
-  - Capa 1 (temporal): `SITE_ACCESS_PASSWORD`
-  - Capa 2 (real): Supabase Auth + RLS
+  - Capa 1 (temporal): barrera simple (`js/access-gate.js`) / `SITE_ACCESS_PASSWORD` (cuando aplique)
+  - Capa 2 (real): **Firebase Auth** + reglas Firestore/Storage
+
+Guías:
+- `docs/13_FIREBASE_ONLINE_IMPLEMENTACION.md`
+- Reglas: `firebase/firestore.rules`, `firebase/storage.rules`
 
 ### Comprobantes (estrategia técnica)
 El proyecto contempla soporte para comprobantes **PDF/imagen**:
 - **Versión local**: metadata del comprobante en el movimiento (`localStorage`) y archivo real en **IndexedDB** (Blob/File).
-- **Versión futura online**: metadata similar, pero archivo real en **Storage cloud** (ej. Supabase Storage).
+- **Versión futura online**: metadata similar, pero archivo real en **Firebase Storage**.
 
-ETAPA 3B implementa el guardado/visualización/reemplazo/eliminación de comprobantes locales en IndexedDB.
+La versión local implementa el guardado/visualización/reemplazo/eliminación de comprobantes en IndexedDB.
 
 Limitaciones local:
 - Los comprobantes viven en **IndexedDB del navegador** (no en una carpeta del Mac) y no se sincronizan entre dispositivos.
 - Si el navegador borra datos del sitio, los adjuntos pueden perderse.
 
-> Nota: En ETAPA 1 se implementa el registro simple + almacenamiento. Dashboard, gráficos, comprobantes y Excel se agregan en etapas posteriores (ver `docs/02_ROADMAP_ETAPAS.md`).
+> Nota: el roadmap histórico por etapas está en `docs/02_ROADMAP_ETAPAS.md`. El roadmap online actual (Firebase) está en `docs/12_ROADMAP_MIGRACION_ONLINE.md`.
 

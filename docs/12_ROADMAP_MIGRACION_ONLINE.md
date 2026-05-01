@@ -1,62 +1,50 @@
-## 12 - Roadmap migración online (Vercel + Supabase) — ETAPA 6
+## 12 - Roadmap migración online (Vercel + GitHub + Firebase)
 
 ### Objetivo
-Migrar desde app local-first (HTML/JS + localStorage + IndexedDB) a una versión online privada con:
-- Next.js en Vercel,
-- Supabase Auth,
-- Supabase Postgres,
-- Supabase Storage (bucket privado),
-- endpoint server-side para Asistente IA real.
+Migrar desde app local-first (HTML/JS + `localStorage` + IndexedDB) a una versión online con:
+- **Vercel** (hosting/deploy desde GitHub),
+- **Firebase Auth** (Gabriel/Vania),
+- **Cloud Firestore** (movimientos + auditoría + metadata),
+- **Firebase Storage** (comprobantes),
+- **ChatGPT/OpenAI** en fase posterior vía endpoint server-side (sin keys en frontend).
 
 ---
 
-## Fase 6A — Preparación documental y schema (esta etapa)
-- Definir arquitectura objetivo (Vercel + Supabase + GitHub).
-- Crear `supabase/schema.sql` (propuesta inicial).
-- Crear `.env.example` con variables requeridas.
-- Documentar flujo Git → GitHub → Vercel.
-- Documentar estrategia de sitio privado (capa 1 y capa 2).
-- Documentar estrategia de migración de datos locales.
+## Fase F1 — Preparación Firebase (fundaciones)
+- Variables `NEXT_PUBLIC_FIREBASE_*` en `.env.example` + `.env.local` (local, ignorado) + Vercel.
+- Reglas base: `firebase/firestore.rules` y `firebase/storage.rules`.
+- Documentación: `docs/13_FIREBASE_ONLINE_IMPLEMENTACION.md`.
+- Placeholders: `js/firebase-config.js`, `js/firebase-service.js` (sin romper app estática).
 
-## Fase 6B — Crear app Next.js base
-- Crear proyecto Next.js (App Router).
-- TypeScript recomendado.
-- Primera pantalla privada (placeholder).
-- Deploy inicial en Vercel.
+## Fase F2 — Login con Firebase Auth
+- UI de login (Email/Password).
+- Sesión persistente y manejo de errores básico.
+- Sustituir/evolucionar la barrera temporal `js/access-gate.js` cuando corresponda.
 
-## Fase 6C — Configurar Supabase Auth
-- Crear proyecto Supabase.
-- Configurar Auth (usuarios Gabriel/Vania).
-- Implementar login y sesión en Next.js.
-- Definir y aplicar RLS base.
+## Fase F3 — Movimientos online en Firestore
+- CRUD detrás de una capa de servicio (ideal: un solo módulo “data layer”).
+- Índices Firestore si aplica (consultas por fecha/tipo/categoría).
 
-## Fase 6D — Migrar movimientos (localStorage → Postgres)
-- Crear API routes / server actions para CRUD de movimientos.
-- Migrar reportes/dashboards para leer desde Postgres.
-- Script/flujo de importación (desde export JSON local).
+## Fase F4 — Auditoría online
+- Colección `auditLogs` con trazabilidad multiusuario.
+- Ideal: escritura server-side (Cloud Functions) en fase posterior.
 
-## Fase 6E — Migrar comprobantes (IndexedDB → Supabase Storage)
-- Bucket privado `comprobantes`.
-- Subida/descarga con Signed URLs o server-side streaming.
-- Metadata en `attachment_metadata` y/o `movements.comprobante`.
+## Fase F5 — Comprobantes en Firebase Storage
+- Paths `comprobantes/{movementId}/{fileName}`.
+- Metadata en `attachments` y/o campo `comprobante` en `movements`.
 
-## Fase 6F — Auditoría server-side
-- Registrar CREATE/UPDATE/DELETE desde backend.
-- UI de auditoría leyendo desde `audit_logs`.
+## Fase F6 — Migración local → Firebase
+- Export/import JSON (movimientos) + estrategia para blobs (manual o ZIP futuro).
 
-## Fase 6G — Asistente IA real (endpoint seguro)
-- `POST /api/ai-assistant`
-- Provider configurable: `AI_PROVIDER=openai|gemini`
-- Keys solo en variables de entorno.
+## Fase F7 — ChatGPT API server-side
+- Endpoint seguro (Vercel serverless / Cloud Functions) con `OPENAI_API_KEY` solo en servidor.
 
-## Fase 6H — Despliegue privado en Vercel
-- Capa 1: `SITE_ACCESS_PASSWORD` (opcional, temporal).
-- Capa 2: Supabase Auth + RLS (obligatoria para producción).
-- Middleware Next.js para rutas privadas.
+## Fase F8 — Pruebas Gabriel/Vania
+- Validación de permisos, reglas, consistencia de métricas vs local, y flujos de adjuntos.
 
-## Fase 6I — Pruebas finales (Gabriel y Vania)
-- Validar consistencia de métricas vs versión local.
-- Pruebas de carga/descarga de comprobantes.
-- Pruebas de exportación Excel.
-- Checklist de seguridad.
+---
+
+## Apéndice — Supabase (legado / alternativa)
+El archivo `supabase/schema.sql` y variables `SUPABASE_*` en `.env.example` se mantienen como referencia histórica.
+La decisión actual del proyecto para backend online es **Firebase**.
 

@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isProjectMember() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/projectMembers/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/projectMembers/$(request.auth.uid)).data.active == true;
+    }
+
+    // Estructura sugerida:
+    // comprobantes/{movementId}/{fileName}
+    match /comprobantes/{movementId}/{fileName} {
+      allow read, write: if isProjectMember()
+        && (request.resource == null || request.resource.size < 25 * 1024 * 1024);
+    }
+  }
+}
