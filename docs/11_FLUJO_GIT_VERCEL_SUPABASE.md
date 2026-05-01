@@ -10,6 +10,29 @@ Definir un flujo simple y repetible para:
 ---
 
 ## Flujo local (Git)
+### Inicializar Git por primera vez (si aparece “not a git repository”)
+Si al ejecutar `git status` ves:
+- `fatal: not a git repository (or any of the parent directories): .git`
+
+Entonces debes inicializar el repositorio en la carpeta del proyecto:
+
+```bash
+cd "/Users/gabamg/Documents/Software contabilidad la sierra D/inversiones-sierra-dorotea"
+git init
+git status
+```
+
+Luego crea el primer commit:
+
+```bash
+git add .
+git commit -m "Initial local version and Vercel Supabase migration plan"
+```
+
+Notas:
+- **`.env.example` sí se sube** (plantilla vacía).
+- **`.env` real nunca se sube** (debe quedar ignorado por `.gitignore`).
+
 Comandos típicos:
 
 ```bash
