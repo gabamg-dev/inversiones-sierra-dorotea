@@ -31,29 +31,29 @@ Las validaciones del formulario están centralizadas en `movements.js` (`validat
 ### UX: secciones colapsables
 Las secciones principales (Dashboard, Resumen rápido, Gráficos, Registro de movimientos y Movimientos) se pueden **colapsar/desplegar** desde su cabecera. El estado se persiste en `localStorage` para mantener la preferencia al recargar.
 
-### ETAPA 2 (Dashboard y análisis)
+### Dashboard y análisis
 - Dashboard financiero con caja, ingresos, gastos y métricas por socio.
 - Reportes/agregaciones por mes y por categoría.
 - “Resumen rápido” con top categoría, mes con mayor gasto, último movimiento y contador.
 - Gráficos con Chart.js: gasto mensual, gasto por categoría y **flujo de caja mensual** (ingresos, gastos y saldo acumulado).
 
-### ETAPA 2.5 (Filtros de movimientos)
+### Filtros de movimientos
 - Sección **“Filtros de movimientos”** para consultar la **tabla** por:
   - fechas, tipo, categoría/subcategoría, reparto, estado, método de pago y texto libre.
 - En esta etapa, los filtros **no** cambian el dashboard ni los gráficos (prepara futura “vista filtrada” y exportación filtrada).
 
-### Asistente IA (Fase IA 1 local)
+### Asistente local del proyecto
 - Panel **“Asistente IA”** con parser determinístico para:
   - crear **borradores** de movimientos desde texto,
   - listar **campos obligatorios faltantes**,
   - responder **consultas locales** (caja actual, gastos por socio, balance mensual, gastos por categoría, sin comprobante).
 - No usa OpenAI/Gemini todavía (sin llamadas externas, sin API keys en frontend).
 
-### ETAPA 4 (Exportación a Excel)
+### Exportación a Excel
 - Botón **“Exportar Excel”** genera un `.xlsx` con hojas de resumen, movimientos y agregaciones.
 - **No** incluye PDFs/imágenes: solo exporta metadata de comprobantes (id local, nombre, tipo y tamaño).
 
-### ETAPA 6A (Preparación migración online)
+### Preparación migración online (Vercel + Supabase + GitHub)
 Camino elegido (aún sin implementar Next.js/Supabase):
 - **Git/GitHub** como repositorio fuente.
 - **Vercel** para despliegue (push a `main` → producción; PR/branches → preview).

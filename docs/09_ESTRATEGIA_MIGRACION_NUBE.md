@@ -24,6 +24,14 @@ Evolucionar desde una app local-first (HTML/JS + `localStorage` + `IndexedDB`) h
   - **Capa 2 (real)**: **login** con Supabase Auth (Gabriel/Vania) + RLS.
 - Opcional: agregar **middleware de Next.js** para bloquear rutas sin sesión válida.
 
+### Barrera temporal (sitio estático en Vercel)
+Mientras la app aún sea estática (antes de Supabase Auth), se puede usar una barrera simple de acceso:
+- módulo local: `js/access-gate.js`
+- clave por defecto: `112233` (solo temporal)
+- estado: `sessionStorage` (no sincroniza entre dispositivos)
+
+Esto **no reemplaza** Auth real. En Fase 6C debe migrarse a Supabase Auth + RLS.
+
 ### Modelo de datos (online)
 En online, el movimiento seguirá teniendo metadata del comprobante:
 - `comprobante.storage.mode = "cloud"`

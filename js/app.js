@@ -1300,6 +1300,15 @@ function initApp() {
 
 document.addEventListener("DOMContentLoaded", () => {
   try {
+    if (window.ISD && window.ISD.accessGate && typeof window.ISD.accessGate.initAccessGate === "function") {
+      window.ISD.accessGate.initAccessGate();
+      const btnLock = document.getElementById("btnLockAccess");
+      if (btnLock) {
+        btnLock.addEventListener("click", () => {
+          window.ISD.accessGate.lockAccess();
+        });
+      }
+    }
     initApp();
   } catch (err) {
     console.error("Error inicializando la app:", err);

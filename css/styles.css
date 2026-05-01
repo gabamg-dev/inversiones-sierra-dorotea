@@ -32,6 +32,18 @@ body {
 
 a { color: inherit; }
 
+.site-notice {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(110, 231, 255, 0.25);
+  background: rgba(110, 231, 255, 0.08);
+  border-radius: 12px;
+  color: rgba(231, 236, 255, 0.92);
+  font-size: 12px;
+}
+
+.site-notice strong { color: var(--text); }
+
 .container {
   width: min(var(--max), calc(100% - 32px));
   margin: 0 auto;
@@ -117,6 +129,36 @@ header.app-header {
 .ai-assistant-section {
   /* Seguridad visual: si en algún layout cae dentro de un grid, fuerza ancho completo. */
   grid-column: 1 / -1;
+}
+
+/* Access gate (barrera temporal). No es seguridad real. */
+.access-gate {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(11, 18, 32, 0.75);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+}
+
+.access-gate-card {
+  width: min(520px, 100%);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(16, 26, 51, 0.95), rgba(15, 24, 48, 0.92));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+html.access-locked .container {
+  display: none;
+}
+
+html.access-locked .access-gate {
+  display: flex;
 }
 
 .panel {

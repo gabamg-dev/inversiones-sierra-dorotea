@@ -20,22 +20,29 @@
         </div>
 
         <div class="header-actions">
+          <button id="btnLockAccess" class="btn" type="button" title="Vuelve a pedir clave de acceso">
+            Bloquear sesión
+          </button>
           <button id="btnResetDemo" class="btn danger" type="button" title="Borra datos locales del navegador">
             Reset local
           </button>
         </div>
       </header>
 
+      <div class="site-notice" role="note">
+        <strong>Versión local-first:</strong> los datos se guardan en este navegador. La sincronización en nube se implementará con Supabase.
+      </div>
+
       <section class="panel collapsible-section" data-section-id="dashboard" style="margin-top: 16px;">
         <div class="panel-header">
           <button class="section-toggle" type="button" aria-expanded="true">
             <span class="section-toggle-icon" aria-hidden="true">▼</span>
             <div>
-              <h2>Dashboard (ETAPA 2)</h2>
+              <h2>Dashboard financiero</h2>
               <p>Métricas operativas del proyecto; comparativas entre socios irán en una sección aparte más adelante.</p>
             </div>
           </button>
-          <span class="tag muted">Vivo</span>
+          <span class="tag muted">Proyecto</span>
         </div>
         <div class="panel-body section-content">
           <div class="dashboard-rows">
@@ -85,7 +92,7 @@
               <p>Indicadores de lectura rápida (se actualizan automáticamente).</p>
             </div>
           </button>
-          <span class="tag muted">ETAPA 2</span>
+          <span class="tag muted">Resumen</span>
         </div>
         <div class="panel-body section-content">
           <div id="quickSummary" class="quick-summary"></div>
@@ -102,7 +109,7 @@
               <p>Gasto mensual, gasto por categoría y flujo de caja mensual (Chart.js).</p>
             </div>
           </button>
-          <span class="tag muted">ETAPA 2</span>
+          <span class="tag muted">Análisis</span>
         </div>
         <div class="panel-body section-content">
           <div class="charts-grid">
@@ -155,10 +162,10 @@
             <span class="section-toggle-icon" aria-hidden="true">▼</span>
             <div>
               <h2>Asistente IA</h2>
-              <p>Fase IA 1 local: parser determinístico + consultas locales. No usa APIs externas ni API keys.</p>
+              <p>Asistente local del proyecto: ayuda a crear borradores y responder consultas (sin APIs externas).</p>
             </div>
           </button>
-          <span class="tag muted">Fase IA 1</span>
+          <span class="tag muted">Asistente</span>
         </div>
         <div class="panel-body section-content">
           <label>
@@ -339,7 +346,7 @@
               </div>
 
               <div class="hint">
-                Comprobantes (imagen/PDF) se integran en ETAPA 3. Exportación Excel en ETAPA 4.
+                Comprobantes (imagen/PDF) se almacenan localmente. Exportación a Excel disponible desde “Exportar Excel”.
               </div>
             </form>
           </div>
@@ -351,7 +358,7 @@
               <span class="section-toggle-icon" aria-hidden="true">▼</span>
               <div>
                 <h2>Movimientos</h2>
-                <p>Listado persistido en el navegador (ETAPA 1).</p>
+                <p>Movimientos registrados del proyecto.</p>
               </div>
             </button>
             <div class="header-actions">
@@ -368,7 +375,7 @@
                   <h2>Filtros de movimientos</h2>
                   <p>En esta etapa afectan solo la tabla (no el dashboard ni gráficos).</p>
                 </div>
-                <span class="tag muted">ETAPA 2.5</span>
+                <span class="tag muted">Filtros</span>
               </div>
               <div class="panel-body">
                 <form id="filtersForm" autocomplete="off" novalidate>
@@ -652,7 +659,7 @@
                 <h2>Comprobante</h2>
                 <p>Subir, reemplazar o eliminar comprobante (IndexedDB).</p>
               </div>
-              <span class="tag muted">ETAPA 3B</span>
+              <span class="tag muted">Comprobantes</span>
             </div>
             <div class="panel-body">
               <div id="edit_attachmentStatus" class="hint">Sin comprobante.</div>
@@ -698,6 +705,7 @@
     <script src="./js/security.js"></script>
     <script src="./js/audit.js"></script>
     <script src="./js/ai-assistant.js"></script>
+    <script src="./js/access-gate.js"></script>
     <script src="./js/export-excel.js"></script>
     <script src="./js/app.js"></script>
   </body>

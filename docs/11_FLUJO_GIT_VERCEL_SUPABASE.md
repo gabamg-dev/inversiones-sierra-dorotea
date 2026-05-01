@@ -82,3 +82,15 @@ En ETAPA 6A **solo se define** el diseño:
 
 La ejecución real (crear proyecto, aplicar SQL, RLS, buckets y políticas) se hace en fases posteriores.
 
+---
+
+## Nota: barrera temporal de acceso (sitio estático)
+Si estás desplegando la app como sitio estático (antes de Supabase Auth), se puede usar una barrera simple de acceso:
+- módulo: `js/access-gate.js`
+- clave por defecto: `112233`
+- estado: se guarda en `sessionStorage` (`isd.access.ok = true`)
+
+Importante:
+- No es seguridad real.
+- Se reemplaza en Fase 6C por **Supabase Auth + RLS**.
+
