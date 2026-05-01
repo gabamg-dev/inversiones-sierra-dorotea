@@ -72,10 +72,11 @@ Modelo propuesto (colecciones):
 Para que las reglas permitan acceso, cada usuario debe tener:
 - `projectMembers/{uid}.active == true`
 
-**Bootstrap inicial (recomendado en consola, una sola vez):**
-- crear manualmente `projectMembers/{uid}` para Gabriel y Vania con `active: true`.
+**Bootstrap (reglas actuales):**
+- un usuario autenticado puede **crear** su propio documento `projectMembers/{uid}` **solo si aún no existe**,
+  con `request.resource.data.uid == uid` y `active == true`.
 
-> Nota: las reglas actuales restringen escritura de `projectMembers` al propio `uid` y requieren ser miembro activo (esto puede requerir un “primer paso” en consola/Admin). Ajuste fino en fases posteriores con Cloud Functions.
+En fases posteriores, el alta de miembros puede endurecerse (solo admin / Cloud Functions) para evitar auto-altas no deseadas.
 
 ---
 
