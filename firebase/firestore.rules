@@ -18,9 +18,16 @@ service cloud.firestore {
       // Lectura: solo miembros activos del proyecto.
       allow read: if isProjectMember();
 
-      // Escritura: por ahora restringida al propio documento del usuario autenticado.
-      // En fases posteriores, el alta de miembros puede moverse a Cloud Functions / Admin SDK.
-      allow create, update, delete: if isSignedIn()
+      // Bootstrap: permitir que un usuario autenticado cree su propio `projectMembers/{uid}`
+      // solo si el documento aún no existe (primer login / alta inicial).
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/projectMembers/$(uid))
+        && request.resource.data.uid == uid
+        && request.resource.data.active == true;
+
+      // Actualización/borrado: solo miembros activos (endurecer luego con roles admin).
+      allow update, delete: if isSignedIn()
         && request.auth.uid == uid
         && isProjectMember();
     }
