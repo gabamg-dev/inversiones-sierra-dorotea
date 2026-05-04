@@ -565,3 +565,27 @@ td {
 
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
+/* Firebase: login y estado de autorización */
+.firebase-auth-panel {
+  margin-top: 14px;
+}
+
+.firebase-auth-panel h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.firebase-unauth-banner {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.10);
+}
+
+.firebase-unauth-banner p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+

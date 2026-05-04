@@ -29,8 +29,55 @@
         </div>
       </header>
 
+      <div id="firebaseAuthPanel" class="firebase-auth-panel panel">
+        <div class="panel-header">
+          <div>
+            <h2>Cuenta Firebase</h2>
+            <p>Inicia sesión para usar movimientos y auditoría en Firestore (misma sesión en PC y celular).</p>
+          </div>
+          <span id="firebaseModeTag" class="tag muted">Modo: local</span>
+        </div>
+        <div class="panel-body">
+          <div id="firebaseLoggedOut">
+            <div class="row">
+              <label>
+                Email
+                <input id="firebaseEmail" type="email" autocomplete="username" />
+              </label>
+              <label>
+                Contraseña
+                <input id="firebasePassword" type="password" autocomplete="current-password" />
+              </label>
+            </div>
+            <div id="firebaseLoginError" class="error" style="display: none"></div>
+            <div class="form-actions" style="margin-top: 12px">
+              <button type="button" id="btnFirebaseSignIn" class="btn primary">Iniciar sesión</button>
+            </div>
+          </div>
+          <div id="firebaseLoggedIn" style="display: none">
+            <div class="hint" style="margin: 0">
+              <span id="firebaseUserLine"></span><br />
+              UID (debug): <span id="firebaseUserUid" class="mono"></span>
+            </div>
+            <div class="form-actions" style="margin-top: 12px">
+              <button type="button" id="btnFirebaseSignOut" class="btn danger">Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="firebaseUnauthorized" class="firebase-unauth-banner" style="display: none" role="alert">
+        <strong>Tu usuario no está autorizado para este proyecto.</strong>
+        <p>
+          Debe existir un documento activo en Firestore <span class="mono">projectMembers/{tu UID}</span> con
+          <span class="mono">active: true</span>.
+        </p>
+        <p>Email: <span id="firebaseUnauthEmail" class="mono"></span> · UID: <span id="firebaseUnauthUid" class="mono"></span></p>
+      </div>
+
+      <div id="isdProjectShell">
       <div class="site-notice" role="note">
-        <strong>Versión local-first:</strong> los datos se guardan en este navegador. La sincronización en nube se implementará con Supabase.
+        <strong>Datos:</strong> sin Firebase, los movimientos siguen en este navegador (localStorage). Con Firebase activo y miembro autorizado, los movimientos se leen y guardan en Firestore. Los comprobantes siguen en IndexedDB y no se sincronizan entre dispositivos todavía.
       </div>
 
       <section class="panel collapsible-section" data-section-id="dashboard" style="margin-top: 16px;">
@@ -486,6 +533,7 @@
           </div>
         </section>
       </main>
+      </div>
     </div>
 
     <!-- Modal PIN (crear / editar / eliminar) -->
@@ -693,6 +741,12 @@
     -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+    <script src="./js/firebase-config.js"></script>
+    <script src="./js/firebase-service.js"></script>
     <script src="./js/categories.js"></script>
     <script src="./js/storage.js"></script>
     <script src="./js/movements.js"></script>

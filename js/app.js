@@ -1,5 +1,16 @@
 /* global ISD */
 
+/** Sincronización: Firestore vs localStorage */
+let currentMovements = [];
+let dataMode = "local";
+let currentFirebaseUser = null;
+let currentProjectMember = null;
+let remoteAuditLogs = [];
+/** @type {null | (() => void)} */
+let firebaseMovementsUnsub = null;
+/** @type {null | (() => void)} */
+let firebaseAuditUnsub = null;
+
 function $(id) {
   const el = document.getElementById(id);
   if (!el) throw new Error(`No se encontró el elemento #${id}`);
@@ -340,8 +351,13 @@ function renderCharts(movements) {
 }
 
 function renderAuditLogs(tbody) {
-  if (!window.ISD || !window.ISD.audit || !window.ISD.audit.getAuditLogs) return;
-  const logs = window.ISD.audit.getAuditLogs();
+  let logs;
+  if (dataMode === "firebase") {
+    logs = Array.isArray(remoteAuditLogs) ? remoteAuditLogs : [];
+  } else {
+    if (!window.ISD || !window.ISD.audit || !window.ISD.audit.getAuditLogs) return;
+    logs = window.ISD.audit.getAuditLogs();
+  }
   const sorted = [...logs].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   const limited = sorted.slice(0, 20);
 
@@ -364,8 +380,12 @@ function renderAuditLogs(tbody) {
     const actionLabel = action === "CREATE" ? "CREAR" : action === "UPDATE" ? "EDITAR" : action === "DELETE" ? "ELIMINAR" : action;
     const d = l.details || {};
     const detalle = `${d.categoria || ""} / ${d.subcategoria || ""} / ${formatMoneyCLP(d.montoTotal || 0)}`.trim();
+    const createdRaw = l.createdAt;
+    const createdDt = createdRaw ? new Date(createdRaw) : null;
+    const ts =
+      createdDt && !isNaN(createdDt.getTime()) ? createdDt.toLocaleString("es-CL") : "—";
     tr.innerHTML = `
-      <td>${escapeHtml(new Date(l.createdAt).toLocaleString("es-CL"))}</td>
+      <td>${escapeHtml(ts)}</td>
       <td><span class="tag muted">${escapeHtml(actionLabel)}</span></td>
       <td>${escapeHtml(l.user || "")}</td>
       <td>${escapeHtml(`${l.summary || ""}${detalle ? `: ${detalle}` : ""}`)}</td>
@@ -508,7 +528,7 @@ function initApp() {
   /** @type {object|null} */
   let lastAiDraft = null;
 
-  let movements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+  currentMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
   let currentFilters = ISD.filters.getDefaultFilters();
 
   function populateFilterCategorias() {
@@ -594,13 +614,147 @@ function initApp() {
   }
 
   function refreshAllUI() {
-    movements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
-    renderMovementsTableWithFilters(movements);
-    updateHeaderTags({ movementsCountTag, lastSavedTag }, movements);
-    renderDashboardMetrics(movements);
-    renderQuickSummary(movements);
-    renderCharts(movements);
+    if (dataMode !== "firebase") {
+      currentMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+    }
+    renderMovementsTableWithFilters(currentMovements);
+    updateHeaderTags({ movementsCountTag, lastSavedTag }, currentMovements);
+    renderDashboardMetrics(currentMovements);
+    renderQuickSummary(currentMovements);
+    renderCharts(currentMovements);
     renderAuditLogs(auditModalTbody);
+  }
+
+  const shellEl = document.getElementById("isdProjectShell");
+  const firebaseUnauthEl = document.getElementById("firebaseUnauthorized");
+
+  function setUnauthorizedVisible(show, user) {
+    if (!shellEl || !firebaseUnauthEl) return;
+    if (show) {
+      shellEl.style.display = "none";
+      firebaseUnauthEl.style.display = "";
+      const em = document.getElementById("firebaseUnauthEmail");
+      const uid = document.getElementById("firebaseUnauthUid");
+      if (em) em.textContent = user && user.email ? user.email : "";
+      if (uid) uid.textContent = user && user.uid ? user.uid : "";
+    } else {
+      shellEl.style.display = "";
+      firebaseUnauthEl.style.display = "none";
+    }
+  }
+
+  function updateFirebaseChrome() {
+    const tag = document.getElementById("firebaseModeTag");
+    const svc = ISD.firebaseService;
+    const loggedOut = document.getElementById("firebaseLoggedOut");
+    const loggedIn = document.getElementById("firebaseLoggedIn");
+    if (!svc || typeof svc.isAvailable !== "function" || !svc.isAvailable()) {
+      if (tag) tag.textContent = "Modo: local (Firebase no cargado)";
+      return;
+    }
+    const u = svc.getCurrentUser && svc.getCurrentUser();
+    if (loggedOut && loggedIn) {
+      if (u) {
+        loggedOut.style.display = "none";
+        loggedIn.style.display = "";
+        const line = document.getElementById("firebaseUserLine");
+        const uidEl = document.getElementById("firebaseUserUid");
+        if (line) line.textContent = `Conectado: ${u.email || u.uid}`;
+        if (uidEl) uidEl.textContent = u.uid || "";
+      } else {
+        loggedOut.style.display = "";
+        loggedIn.style.display = "none";
+      }
+    }
+    if (tag) {
+      if (dataMode === "firebase") tag.textContent = "Modo: Firestore (online)";
+      else if (u) tag.textContent = "Modo: local (sin membresía)";
+      else tag.textContent = "Modo: local";
+    }
+  }
+
+  function teardownFirebaseListeners() {
+    if (typeof firebaseMovementsUnsub === "function") {
+      firebaseMovementsUnsub();
+      firebaseMovementsUnsub = null;
+    }
+    if (typeof firebaseAuditUnsub === "function") {
+      firebaseAuditUnsub();
+      firebaseAuditUnsub = null;
+    }
+  }
+
+  function wireFirebaseAuth() {
+    const svc = ISD.firebaseService;
+    if (!svc || typeof svc.isAvailable !== "function" || !svc.isAvailable()) return;
+
+    svc.onAuthStateChanged(async (user) => {
+      currentFirebaseUser = user;
+      teardownFirebaseListeners();
+      if (!user) {
+        dataMode = "local";
+        currentProjectMember = null;
+        setUnauthorizedVisible(false, null);
+        currentMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+        remoteAuditLogs = [];
+        updateFirebaseChrome();
+        refreshAllUI();
+        return;
+      }
+
+      const mem = await svc.checkProjectMembership(user.uid);
+      if (!mem.authorized) {
+        dataMode = "local";
+        currentProjectMember = null;
+        currentMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+        remoteAuditLogs = [];
+        setUnauthorizedVisible(true, user);
+        updateFirebaseChrome();
+        refreshAllUI();
+        return;
+      }
+
+      currentProjectMember = mem.member;
+      dataMode = "firebase";
+      setUnauthorizedVisible(false, null);
+      firebaseMovementsUnsub = svc.watchMovements((list) => {
+        currentMovements = Array.isArray(list) ? list : [];
+        refreshAllUI();
+      });
+      firebaseAuditUnsub = svc.watchAuditLogs((logs) => {
+        remoteAuditLogs = Array.isArray(logs) ? logs : [];
+        renderAuditLogs(auditModalTbody);
+      });
+      updateFirebaseChrome();
+      refreshAllUI();
+    });
+
+    const btnIn = document.getElementById("btnFirebaseSignIn");
+    const btnOut = document.getElementById("btnFirebaseSignOut");
+    const errEl = document.getElementById("firebaseLoginError");
+    const emailEl = document.getElementById("firebaseEmail");
+    const passEl = document.getElementById("firebasePassword");
+    if (btnIn && emailEl && passEl) {
+      btnIn.addEventListener("click", async () => {
+        if (errEl) {
+          setVisible(errEl, false);
+          setText(errEl, "");
+        }
+        try {
+          await svc.signIn(emailEl.value, passEl.value);
+        } catch (e) {
+          if (errEl) {
+            setText(errEl, String((e && e.message) || e || "Error de inicio de sesión."));
+            setVisible(errEl, true);
+          }
+        }
+      });
+    }
+    if (btnOut) {
+      btnOut.addEventListener("click", () => {
+        svc.signOut().catch(() => {});
+      });
+    }
   }
 
   function resetMainFormAfterCreate() {
@@ -642,26 +796,49 @@ function initApp() {
   }
 
   async function runConfirmedAction(ctx) {
+    const auditUser =
+      dataMode === "firebase" && currentFirebaseUser && currentFirebaseUser.email
+        ? currentFirebaseUser.email
+        : ISD.audit.CURRENT_USER;
+
     if (ctx.action === "create") {
-      let attachmentMeta = null;
-      if (ctx.attachmentFile) {
-        attachmentMeta = await ISD.attachments.saveAttachment(ctx.attachmentFile);
+      if (dataMode === "firebase") {
+        const movement = ISD.movements.createMovementFromDraft(ctx.draft);
+        movement.comprobante = null;
+        const docId = await ISD.firebaseService.createMovement(movement);
+        let attachmentMeta = null;
+        if (ctx.attachmentFile) {
+          attachmentMeta = await ISD.attachments.saveAttachment(ctx.attachmentFile);
+          await ISD.firebaseService.updateMovement(docId, { comprobante: attachmentMeta });
+        }
+        const finalMovement = { ...movement, id: docId, comprobante: attachmentMeta };
+        await ISD.firebaseService.createAuditLog({
+          actionType: "CREATE",
+          movementId: docId,
+          user: auditUser,
+          summary: "Movimiento creado",
+          details: ISD.audit.pickMovementDetails(finalMovement),
+        });
+      } else {
+        let attachmentMeta = null;
+        if (ctx.attachmentFile) {
+          attachmentMeta = await ISD.attachments.saveAttachment(ctx.attachmentFile);
+        }
+        const movement = ISD.movements.createMovementFromDraft(ctx.draft);
+        movement.comprobante = attachmentMeta;
+        currentMovements = ISD.movements.sortMovementsDesc([movement, ...currentMovements]);
+        ISD.storage.saveMovements(currentMovements);
+        ISD.audit.addAuditLog({
+          actionType: "CREATE",
+          movementId: movement.id,
+          user: auditUser,
+          summary: "Movimiento creado",
+          details: ISD.audit.pickMovementDetails(movement),
+        });
       }
-      const movement = ISD.movements.createMovementFromDraft(ctx.draft);
-      movement.comprobante = attachmentMeta;
-      movements = ISD.movements.sortMovementsDesc([movement, ...movements]);
-      ISD.storage.saveMovements(movements);
-      ISD.audit.addAuditLog({
-        actionType: "CREATE",
-        movementId: movement.id,
-        user: ISD.audit.CURRENT_USER,
-        summary: "Movimiento creado",
-        details: ISD.audit.pickMovementDetails(movement),
-      });
     } else if (ctx.action === "update") {
-      const existing = movements.find((m) => String(m.id) === String(ctx.id));
+      const existing = currentMovements.find((m) => String(m.id) === String(ctx.id));
       if (existing) {
-        // Operaciones de comprobante: mantener / reemplazar / eliminar
         const wantsDelete = Boolean(ctx.deleteAttachment);
         const newFile = ctx.attachmentFile || null;
 
@@ -676,43 +853,84 @@ function initApp() {
 
         const updated = ISD.movements.applyDraftToMovement(existing, ctx.draft);
         updated.comprobante = nextComprobante;
-        updated.editadoPor = ISD.audit.CURRENT_USER;
+        updated.editadoPor = auditUser;
         updated.fechaEdicion = new Date().toISOString();
-        ISD.storage.updateMovement(ctx.id, updated);
 
-        // Limpieza: si se reemplazó o borró, elimina el archivo antiguo
         const newAttachmentId = nextComprobante && nextComprobante.id ? nextComprobante.id : null;
         if (oldAttachmentId && oldAttachmentId !== newAttachmentId && (wantsDelete || newFile)) {
-          try { await ISD.attachments.deleteAttachment(oldAttachmentId); } catch { /* noop */ }
+          try {
+            await ISD.attachments.deleteAttachment(oldAttachmentId);
+          } catch {
+            /* noop */
+          }
         }
 
-        ISD.audit.addAuditLog({
-          actionType: "UPDATE",
-          movementId: updated.id,
-          user: ISD.audit.CURRENT_USER,
-          summary: "Movimiento editado",
-          details: ISD.audit.pickMovementDetails(updated),
-        });
+        if (dataMode === "firebase") {
+          await ISD.firebaseService.updateMovement(ctx.id, updated);
+          await ISD.firebaseService.createAuditLog({
+            actionType: "UPDATE",
+            movementId: String(updated.id),
+            user: auditUser,
+            summary: "Movimiento editado",
+            details: ISD.audit.pickMovementDetails(updated),
+          });
+        } else {
+          ISD.storage.updateMovement(ctx.id, updated);
+          ISD.audit.addAuditLog({
+            actionType: "UPDATE",
+            movementId: updated.id,
+            user: auditUser,
+            summary: "Movimiento editado",
+            details: ISD.audit.pickMovementDetails(updated),
+          });
+        }
       }
-      movements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+      if (dataMode !== "firebase") {
+        currentMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+      }
     } else if (ctx.action === "delete") {
-      const snapshot = ctx.snapshot || pendingDeleteSnapshot || movements.find((m) => String(m.id) === String(ctx.id));
-      if (snapshot) {
-        ISD.audit.addAuditLog({
-          actionType: "DELETE",
-          movementId: snapshot.id,
-          user: ISD.audit.CURRENT_USER,
-          summary: "Movimiento eliminado",
-          details: ISD.audit.pickMovementDetails(snapshot),
-        });
+      const snapshot = ctx.snapshot || pendingDeleteSnapshot || currentMovements.find((m) => String(m.id) === String(ctx.id));
+
+      if (dataMode === "firebase") {
+        if (snapshot) {
+          await ISD.firebaseService.createAuditLog({
+            actionType: "DELETE",
+            movementId: String(snapshot.id),
+            user: auditUser,
+            summary: "Movimiento eliminado",
+            details: ISD.audit.pickMovementDetails(snapshot),
+          });
+        }
+        const attId = snapshot && snapshot.comprobante && snapshot.comprobante.id ? snapshot.comprobante.id : null;
+        if (attId) {
+          try {
+            await ISD.attachments.deleteAttachment(attId);
+          } catch {
+            /* noop */
+          }
+        }
+        await ISD.firebaseService.deleteMovement(ctx.id);
+      } else {
+        if (snapshot) {
+          ISD.audit.addAuditLog({
+            actionType: "DELETE",
+            movementId: snapshot.id,
+            user: auditUser,
+            summary: "Movimiento eliminado",
+            details: ISD.audit.pickMovementDetails(snapshot),
+          });
+        }
+        const attId = snapshot && snapshot.comprobante && snapshot.comprobante.id ? snapshot.comprobante.id : null;
+        if (attId) {
+          try {
+            await ISD.attachments.deleteAttachment(attId);
+          } catch {
+            /* noop */
+          }
+        }
+        ISD.storage.deleteMovement(ctx.id);
+        currentMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
       }
-      // Elimina adjunto del movimiento antes de borrar
-      const attId = snapshot && snapshot.comprobante && snapshot.comprobante.id ? snapshot.comprobante.id : null;
-      if (attId) {
-        try { await ISD.attachments.deleteAttachment(attId); } catch { /* noop */ }
-      }
-      ISD.storage.deleteMovement(ctx.id);
-      movements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
     }
     refreshAllUI();
     setText(lastSavedTag, `Actualizado ${new Date().toLocaleString("es-CL")}`);
@@ -829,7 +1047,7 @@ function initApp() {
 
   /** Editar: abre modal de edición con datos cargados. */
   function handleEditMovement(id) {
-    const movement = movements.find((m) => String(m.id) === String(id));
+    const movement = currentMovements.find((m) => String(m.id) === String(id));
     if (!movement) return;
     openEditModal(movement);
   }
@@ -837,9 +1055,12 @@ function initApp() {
   /** Eliminar: confirmación textual y luego PIN. */
   function handleDeleteMovement(id) {
     pendingDeleteId = id;
-    pendingDeleteSnapshot = movements.find((m) => String(m.id) === String(id)) || null;
+    pendingDeleteSnapshot = currentMovements.find((m) => String(m.id) === String(id)) || null;
     openOverlay(modalConfirmDelete);
   }
+
+  wireFirebaseAuth();
+  updateFirebaseChrome();
 
   initCategoriasUI({ categoriaSelect: categoria, subcategoriaSelect: subcategoria });
   categoria.disabled = false;
@@ -869,7 +1090,7 @@ function initApp() {
         requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
         // Re-render de charts para asegurar layout correcto (sin tocar métricas globales).
         try {
-          renderCharts(movements);
+          renderCharts(currentMovements);
         } catch {
           // noop
         }
@@ -1088,7 +1309,7 @@ function initApp() {
       return;
     }
 
-    const result = ISD.aiAssistant.analyzeUserMessage(text, movements);
+    const result = ISD.aiAssistant.analyzeUserMessage(text, currentMovements);
     const intent = result && result.intent ? String(result.intent) : "UNKNOWN";
     if (aiIntentTag) aiIntentTag.textContent = intent;
 
@@ -1160,13 +1381,13 @@ function initApp() {
   filtersForm.addEventListener("submit", (e) => {
     e.preventDefault();
     currentFilters = readFiltersFromUI();
-    renderMovementsTableWithFilters(movements);
+    renderMovementsTableWithFilters(currentMovements);
   });
 
   btnClearFilters.addEventListener("click", () => {
     currentFilters = ISD.filters.getDefaultFilters();
     writeFiltersToUI(currentFilters);
-    renderMovementsTableWithFilters(movements);
+    renderMovementsTableWithFilters(currentMovements);
   });
 
   btnClearForm.addEventListener("click", () => {
@@ -1180,8 +1401,14 @@ function initApp() {
   });
 
   btnResetDemo.addEventListener("click", () => {
+    if (dataMode === "firebase") {
+      alert(
+        "Estás en modo Firestore: los movimientos están en la nube. Este botón solo borra datos locales cuando trabajas sin Firebase activo como fuente."
+      );
+      return;
+    }
     ISD.storage.resetAll();
-    movements = [];
+    currentMovements = [];
     refreshAllUI();
     setText(lastSavedTag, "Local reseteado");
   });
@@ -1193,8 +1420,11 @@ function initApp() {
 
   btnExportExcel.addEventListener("click", () => {
     try {
-      const allMovements = ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
-      const auditLogs = ISD.audit.getAuditLogs();
+      const allMovements =
+        dataMode === "firebase"
+          ? ISD.movements.sortMovementsDesc(currentMovements)
+          : ISD.movements.sortMovementsDesc(ISD.storage.loadMovements());
+      const auditLogs = dataMode === "firebase" ? remoteAuditLogs : ISD.audit.getAuditLogs();
       const fileName = ISD.exportExcel.exportWorkbook({
         movements: allMovements,
         auditLogs,

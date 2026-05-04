@@ -18,12 +18,17 @@ Aplicación web local (HTML + CSS + JS) para controlar el flujo financiero de un
 ### Cómo ejecutar (modo local)
 1. Abrir `index.html` en el navegador (doble clic).
 2. Registrar un movimiento desde el formulario.
-3. Ver el movimiento en la tabla. La información queda persistida en el navegador vía `localStorage`.
+3. Ver el movimiento en la tabla. Sin Firebase, la información queda en el navegador vía `localStorage` (+ IndexedDB para archivos de comprobantes).
+
+### Firebase (Firestore + Auth)
+Con **inicio de sesión email/contraseña** y un documento válido `projectMembers/{uid}` en Firestore (`active: true`), los **movimientos** y la **auditoría** se leen y escriben en **Firestore**. Así la misma cuenta ve los mismos datos en PC y celular.
+
+Los **comprobantes** (PDF/imagen) siguen guardándose en **IndexedDB** del dispositivo; **no** se sincronizan en la nube todavía (Firebase Storage pendiente).
 
 ### Deploy (Vercel, sitio estático)
 El proyecto puede desplegarse como sitio estático en Vercel (GitHub → Vercel).
-- Hoy la app sigue siendo **local-first**: los datos se guardan en el navegador del visitante (`localStorage` + IndexedDB para comprobantes).
-- La sincronización multi-dispositivo llegará cuando se implemente **Firebase** (Firestore + Storage) y login real.
+- **Sin Firebase**: datos **local-first** (`localStorage` + IndexedDB para comprobantes).
+- **Con Firebase**: movimientos y auditoría online en Firestore; comprobantes siguen locales hasta la fase Storage.
 
 Variables:
 - Usa `.env.example` como plantilla.
@@ -35,7 +40,7 @@ Las validaciones del formulario están centralizadas en `movements.js` (`validat
 
 **PIN local (por defecto `112233`):** registrar un movimiento nuevo, guardar una edición o eliminar un registro requiere introducir el PIN en el modal de confirmación. La única comprobación debe hacerse vía `ISD.security.validatePin()` para poder cambiar luego por autenticación real. Los datos sensibles finales irán en backend; hoy el PIN es sólo una barrera básica en el navegador.
 
-**Auditoría (local):** el sistema registra un historial de acciones (CREATE/UPDATE/DELETE) en `localStorage` para trazabilidad. Se consulta bajo demanda con el botón **“Ver historial de acciones”** (abre un modal con los últimos eventos).
+**Auditoría:** en modo local el historial vive en `localStorage`. En modo Firestore, las últimas entradas se leen desde la colección `auditLogs`. Consulta con **“Ver historial de acciones”**.
 
 ### UX: secciones colapsables
 Las secciones principales (Dashboard, Resumen rápido, Gráficos, Registro de movimientos y Movimientos) se pueden **colapsar/desplegar** desde su cabecera. El estado se persiste en `localStorage` para mantener la preferencia al recargar.
@@ -63,7 +68,7 @@ Las secciones principales (Dashboard, Resumen rápido, Gráficos, Registro de mo
 - **No** incluye PDFs/imágenes: solo exporta metadata de comprobantes (id local, nombre, tipo y tamaño).
 
 ### Preparación migración online (Vercel + GitHub + Firebase)
-Camino elegido para la versión online (en progreso; aún sin CRUD remoto completo):
+Camino elegido para la versión online:
 - **Git/GitHub** como repositorio fuente.
 - **Vercel** para despliegue (push a `main` → producción; PR/branches → preview).
 - **Firebase** para **Auth + Firestore + Storage**.
@@ -77,13 +82,13 @@ Guías:
 
 ### Comprobantes (estrategia técnica)
 El proyecto contempla soporte para comprobantes **PDF/imagen**:
-- **Versión local**: metadata del comprobante en el movimiento (`localStorage`) y archivo real en **IndexedDB** (Blob/File).
-- **Versión futura online**: metadata similar, pero archivo real en **Firebase Storage**.
+- **IndexedDB (local por dispositivo)**: archivo real; metadata referenciada desde el movimiento.
+- **Firestore**: puede guardar metadata del comprobante cuando existe en ese dispositivo; el archivo **no** viaja a la nube hasta implementar **Firebase Storage**.
 
-La versión local implementa el guardado/visualización/reemplazo/eliminación de comprobantes en IndexedDB.
+La app implementa guardado/visualización/reemplazo/eliminación en IndexedDB.
 
-Limitaciones local:
-- Los comprobantes viven en **IndexedDB del navegador** (no en una carpeta del Mac) y no se sincronizan entre dispositivos.
+Limitaciones actuales:
+- Los archivos viven en **IndexedDB del navegador** y **no** se sincronizan entre PC y celular hasta la fase Storage.
 - Si el navegador borra datos del sitio, los adjuntos pueden perderse.
 
 > Nota: el roadmap histórico por etapas está en `docs/02_ROADMAP_ETAPAS.md`. El roadmap online actual (Firebase) está en `docs/12_ROADMAP_MIGRACION_ONLINE.md`.

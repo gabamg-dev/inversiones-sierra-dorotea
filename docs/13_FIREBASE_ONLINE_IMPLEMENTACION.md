@@ -1,154 +1,74 @@
-## 13 - Implementación online con Firebase (Auth + Firestore + Storage)
+## 13 - Firebase online (Auth + Firestore) — implementación actual
 
-### Objetivo
-Preparar la migración desde la app **local-first** (HTML estático + `localStorage` + IndexedDB) hacia una versión online con:
-- **Vercel** (hosting/deploy desde GitHub)
-- **Firebase Auth** (Gabriel/Vania)
-- **Cloud Firestore** (movimientos + auditoría + metadata)
-- **Firebase Storage** (comprobantes en nube)
+### Qué incluye esta fase
+- **Firebase Authentication** (email/contraseña) desde la propia app.
+- Verificación de **miembro del proyecto** en Firestore: `projectMembers/{uid}` con `active: true`.
+- **Movimientos** en la colección `movements` (CRUD en tiempo real con `onSnapshot`).
+- **Auditoría** en `auditLogs` (escritura en cada CREATE/UPDATE/DELETE; lectura de las últimas 20 entradas con listener).
+- **Comprobantes**: no migrados; el archivo sigue en **IndexedDB** del navegador. Un movimiento en Firestore puede llevar metadata de comprobante `null` o el objeto local si se adjuntó en ese dispositivo.
+- **No** se usa Analytics. **No** se suben comprobantes a **Firebase Storage** todavía.
 
-Esta guía es **ETAPA de preparación**: reglas, modelo de datos, variables y checklist. **No** implementa aún login UI ni CRUD online.
+### SDK
+- **Firebase JS compat 10.12.5** vía CDN: `firebase-app-compat`, `firebase-auth-compat`, `firebase-firestore-compat`, `firebase-storage-compat` (Storage inicializado para fases futuras; comprobantes aún no).
+- Inicialización: `js/firebase-config.js` → `window.ISD.firebaseApp`, `firebaseAuth`, `firebaseDb`, `firebaseStorage`.
+- API de app: `window.ISD.firebaseService` en `js/firebase-service.js`.
 
----
+### Configuración Web (pública)
+Los valores `apiKey`, `projectId`, etc. están en `firebase-config.js`. Son **públicos por diseño** en apps web; la seguridad viene de **Firestore Rules** y **Authentication**. No incluir claves de servicio ni API keys de OpenAI en el frontend.
 
-## Decisiones actuales
-- **Backend elegido**: Firebase (capa gratuita razonable para arrancar).
-- **Supabase**: queda como **alternativa/legado documental** (`supabase/schema.sql` puede conservarse como referencia histórica).
-- **Analytics**: **no** se usa por ahora (no llamar `getAnalytics()`).
+### Cómo iniciar sesión
+1. Abre la app (local o Vercel).
+2. Paso opcional/fijo según uso: **clave de acceso** `112233` (`access-gate`) si la sesión está bloqueada.
+3. En **“Cuenta Firebase”**, introduce email y contraseña del usuario creado en Firebase Authentication.
+4. Si el usuario tiene documento `projectMembers/{UID}` con `active: true`, el modo pasa a **Firestore** y se cargan movimientos desde la nube.
 
----
+### Cómo encontrar el UID
+- Tras iniciar sesión, la UI muestra **UID (debug)** en el panel Firebase.
+- En Firebase Console → **Authentication** → usuario → columna **User UID**.
 
-## 1) Crear proyecto Firebase
-1. Ir a Firebase Console.
-2. Crear proyecto (ej. `inversiones-sierra-dorotea`).
-3. Habilitar Google Cloud recursos según el asistente (si aplica).
+### Crear `projectMembers/{uid}`
+En Firestore, colección `projectMembers`, documento ID = **exactamente** el UID del usuario (Auth).
 
----
+Campos recomendados (ejemplo):
+- `displayName`: `"Gabriel"`
+- `email`: mismo email que en Auth
+- `role`: `"admin"` (u otro; las reglas actuales validan sobre todo `active`)
+- `active`: `true`
 
-## 2) Crear Web App (solo para obtener `firebaseConfig`)
-1. Project settings → Your apps → Web.
-2. Registrar app web.
-3. Copiar el objeto `firebaseConfig` (API key, projectId, etc.).
+Si `active` no es `true` o el documento no existe, la app muestra **“Tu usuario no está autorizado…”** y oculta el contenido del proyecto (no se muestran datos online).
 
-**Importante**
-- Estos valores son “públicos” en el sentido de que terminan en el cliente, pero **no deben hardcodearse** en el repo.
-- Deben vivir en:
-  - `.env.local` (desarrollo local, **no** versionado)
-  - Variables de entorno en **Vercel** (producción/preview)
+### Reglas Firestore
+Archivo: `firebase/firestore.rules`. Debes **desplegarlas** en Firebase Console (o CLI) para que coincidan con el repo.
 
----
+Puntos clave:
+- Cada usuario puede **leer su propio** `projectMembers/{uid}` (evita dependencia circular al comprobar membresía).
+- `movements` y `auditLogs`: lectura/escritura solo si el usuario es miembro activo (`isProjectMember()`).
 
-## 3) Variables de entorno (plantilla)
-Ver `.env.example` (versionado) y crea localmente `.env.local` (ignorado) con tus valores reales.
+### Datos online vs local
 
-**No subas `.env.local` al repo.**
+| Dato | Online (Firebase) | Local |
+|------|-------------------|--------|
+| Movimientos | Colección `movements` | `localStorage` (`ISD.storage`) |
+| Auditoría vista en modal | Colección `auditLogs` | `localStorage` (`ISD.audit`) |
+| Comprobantes (archivo) | Pendiente (Storage) | IndexedDB |
 
----
+**Fallback:** si no hay sesión o no hay membresía, `dataMode` es `"local"` y la app usa los movimientos guardados en `localStorage` (no se borran automáticamente).
 
-## 4) Authentication (Email/Password)
-1. Firebase Console → Authentication → Sign-in method.
-2. Habilitar **Email/Password**.
-3. Crear usuarios:
-   - Gabriel
-   - Vania
+### Cómo probar en PC y celular
+1. Despliega en Vercel (o sirve HTTPS local con tunnel si hace falta; Firebase Auth suele preferir orígenes consistentes).
+2. En ambos dispositivos, misma URL y **mismo usuario** Firebase.
+3. Crea un movimiento en uno; debe aparecer en el otro tras sincronización (listener).
+4. Comprueba que **comprobantes** adjuntos en un dispositivo **no** abren en el otro si el archivo no existe en su IndexedDB (esperado hasta Storage).
 
-Recomendación:
-- usar emails dedicados del proyecto (no personales si no quieres mezclar cuentas).
+### Exportar Excel y asistente IA
+Con sesión Firebase válida, ambos usan **`currentMovements`** cargados desde Firestore (y auditoría remota en Excel cuando aplica).
 
----
+### Qué hacer si aparece “usuario no autorizado”
+1. Confirma el **UID** mostrado con el ID del documento en `projectMembers`.
+2. Verifica `active: true`.
+3. Vuelve a publicar reglas si cambiaron.
+4. Cierra sesión y vuelve a entrar.
 
-## 5) Firestore (Production mode + reglas)
-1. Firestore Database → Create database → **Production mode** (luego aplicar reglas del repo).
-2. Aplicar reglas desde `firebase/firestore.rules`.
-
-Modelo propuesto (colecciones):
-- `projectMembers/{uid}`
-- `users/{uid}`
-- `movements/{movementId}`
-- `auditLogs/{logId}`
-- `attachments/{attachmentId}`
-
-### Alta inicial de miembros (`projectMembers`)
-Para que las reglas permitan acceso, cada usuario debe tener:
-- `projectMembers/{uid}.active == true`
-
-**Bootstrap (reglas actuales):**
-- un usuario autenticado puede **crear** su propio documento `projectMembers/{uid}` **solo si aún no existe**,
-  con `request.resource.data.uid == uid` y `active == true`.
-
-En fases posteriores, el alta de miembros puede endurecerse (solo admin / Cloud Functions) para evitar auto-altas no deseadas.
-
----
-
-## 6) Storage (privado + reglas)
-1. Firebase Console → Storage → Get started.
-2. Aplicar reglas desde `firebase/storage.rules`.
-
-Estructura sugerida:
-- `comprobantes/{movementId}/{fileName}`
-
-Acceso:
-- solo usuarios autenticados **y** miembros activos (`projectMembers`).
-
----
-
-## 7) SDK Firebase (próxima fase)
-Para HTML estático actual: **no** se bundlea SDK en esta tarea.
-
-Cuando se implemente:
-- usar módulos `firebase/app`, `firebase/auth`, `firebase/firestore`, `firebase/storage`
-- **no** inicializar Analytics
-
-En Next.js (futuro):
-- mover configuración a `lib/firebase/*` y leer `process.env.NEXT_PUBLIC_FIREBASE_*`.
-
-Archivos placeholder (no rompen la app):
-- `js/firebase-config.js`
-- `js/firebase-service.js`
-
----
-
-## 8) Cómo validar que Gabriel y Vania ven lo mismo
-1. Login con ambos usuarios (cuando exista UI).
-2. Crear un movimiento con uno.
-3. Verificar lectura con el otro (misma colección `movements`).
-
----
-
-## 9) Límites del plan gratuito (orientativo)
-Los límites cambian; revisar documentación oficial de Firebase:
-- cuotas de Firestore (lecturas/escrituras)
-- cuotas de Storage (almacenamiento y descargas)
-- límites de Auth
-
----
-
-## 10) Pendientes (próximas fases)
-- Login UI con Firebase Auth
-- CRUD Firestore (movimientos) + índices si aplica
-- Subida/descarga Storage + metadata `attachments`
-- Auditoría online (ideal: server-side)
-- Migración desde `localStorage`/IndexedDB
-- ChatGPT/OpenAI vía endpoint server-side (sin API keys en frontend)
-
----
-
-## Referencia local `.env.local` (crear en tu Mac; NO commitear)
-Copia estos valores desde Firebase Console (Web App config). Ejemplo de forma (rellena tú los valores reales):
-
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=...
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-NEXT_PUBLIC_FIREBASE_APP_ID=...
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
-
-SITE_ACCESS_PASSWORD=112233
-
-AI_PROVIDER=openai
-AI_MODEL=
-OPENAI_API_KEY=
-GEMINI_API_KEY=
-```
+### Pendiente (siguiente fase)
+- Subir comprobantes a **Firebase Storage** y sincronizar metadata entre dispositivos.
+- Endurecer reglas (roles admin, sin auto-bootstrap de miembros si ya no aplica).

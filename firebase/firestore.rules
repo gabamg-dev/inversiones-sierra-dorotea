@@ -15,8 +15,8 @@ service cloud.firestore {
 
     // projectMembers/{uid}
     match /projectMembers/{uid} {
-      // Lectura: solo miembros activos del proyecto.
-      allow read: if isProjectMember();
+      // Cada usuario puede leer su propio documento (bootstrap / verificación sin dependencia circular).
+      allow read: if isSignedIn() && request.auth.uid == uid;
 
       // Bootstrap: permitir que un usuario autenticado cree su propio `projectMembers/{uid}`
       // solo si el documento aún no existe (primer login / alta inicial).

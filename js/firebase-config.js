@@ -1,36 +1,42 @@
-// Placeholder de configuración Firebase (NO inicializa SDK).
-// La app HTML estática actual sigue siendo local-first; Firebase se integrará en fases posteriores.
-//
-// IMPORTANTE:
-// - No hardcodear firebaseConfig en el repo.
-// - En Next.js/Vercel: usar process.env.NEXT_PUBLIC_FIREBASE_*.
-// - En HTML estático futuro: inyectar config vía build step o variables públicas de Vercel (sin secretos).
-// - No usar Firebase Analytics todavía (no llamar getAnalytics).
+// Inicialización Firebase (compat SDK vía CDN).
+// Valores públicos de la Web App (no son secretos; no incluir claves de servicio ni OpenAI).
 (function () {
   "use strict";
 
   const global = window;
   global.ISD = global.ISD || {};
 
-  /**
-   * Lee configuración desde window.__ISD_FIREBASE_CONFIG__ si existe (inyección futura),
-   * o desde placeholders vacíos (modo offline).
-   */
-  function readPublicFirebaseConfigFromWindow() {
-    const cfg = global.__ISD_FIREBASE_CONFIG__;
-    if (!cfg || typeof cfg !== "object") return null;
-    return {
-      apiKey: String(cfg.apiKey || ""),
-      authDomain: String(cfg.authDomain || ""),
-      projectId: String(cfg.projectId || ""),
-      storageBucket: String(cfg.storageBucket || ""),
-      messagingSenderId: String(cfg.messagingSenderId || ""),
-      appId: String(cfg.appId || ""),
-      measurementId: String(cfg.measurementId || ""),
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAcVQN4w7748-dXVs6RzjyYRoQyKVrYE0I",
+    authDomain: "inversiones-sierra-dorotea.firebaseapp.com",
+    projectId: "inversiones-sierra-dorotea",
+    storageBucket: "inversiones-sierra-dorotea.firebasestorage.app",
+    messagingSenderId: "782906555137",
+    appId: "1:782906555137:web:d6ad2f226da3633aa67900",
+    measurementId: "G-LYBSQQYNQ5",
+  };
+
+  global.ISD.firebaseConfig = firebaseConfig;
+  global.ISD.firebaseApp = null;
+  global.ISD.firebaseAuth = null;
+  global.ISD.firebaseDb = null;
+  global.ISD.firebaseStorage = null;
+
+  if (typeof firebase === "undefined") {
+    console.error("ISD Firebase: el SDK compat no está cargado (window.firebase ausente). Revisa el orden de <script> en index.html.");
+    return;
   }
 
-  global.ISD.firebaseConfig = {
-    readPublicFirebaseConfigFromWindow,
-  };
+  try {
+    if (!firebase.apps || !firebase.apps.length) {
+      global.ISD.firebaseApp = firebase.initializeApp(firebaseConfig);
+    } else {
+      global.ISD.firebaseApp = firebase.app();
+    }
+    global.ISD.firebaseAuth = firebase.auth();
+    global.ISD.firebaseDb = firebase.firestore();
+    global.ISD.firebaseStorage = firebase.storage();
+  } catch (err) {
+    console.error("ISD Firebase: error al inicializar la app:", err);
+  }
 })();
