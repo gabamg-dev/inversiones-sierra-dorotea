@@ -2,6 +2,9 @@
 
 Aplicación web local (HTML + CSS + JS) para controlar el flujo financiero de un proyecto inmobiliario (construcción de vivienda).
 
+### Interfaz y mensajes (usuarios finales)
+La pantalla principal prioriza textos claros para gestión del proyecto: no muestra detalles de implementación (servicios en la nube, almacenamiento del navegador, endpoints, etc.). Esa información queda en este README y en `docs/`. Los **comprobantes** (archivos adjuntos) siguen sin sincronización entre dispositivos hasta una futura fase en la nube.
+
 ### Objetivo
 - Registrar **ingresos** y **gastos** con trazabilidad (origen/destino, pagador, método, documento, proveedor).
 - Controlar **aportes de socios** (Gabriel / Vania) incluyendo repartos 100/0, 0/100 y 50/50.

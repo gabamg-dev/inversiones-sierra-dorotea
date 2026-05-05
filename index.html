@@ -23,8 +23,8 @@
           <button id="btnLockAccess" class="btn" type="button" title="Vuelve a pedir clave de acceso">
             Bloquear sesión
           </button>
-          <button id="btnResetDemo" class="btn danger" type="button" title="Borra datos locales del navegador">
-            Reset local
+          <button id="btnResetDemo" class="btn danger" type="button" title="Borra la copia de datos guardada en este dispositivo (solo si no usas sesión con sincronización)">
+            Borrar datos en este equipo
           </button>
         </div>
       </header>
@@ -32,10 +32,10 @@
       <div id="firebaseAuthPanel" class="firebase-auth-panel panel">
         <div class="panel-header">
           <div>
-            <h2>Cuenta Firebase</h2>
-            <p>Inicia sesión para usar movimientos y auditoría en Firestore (misma sesión en PC y celular).</p>
+            <h2>Cuenta</h2>
+            <p class="account-sub">Sesión activa del proyecto</p>
           </div>
-          <span id="firebaseModeTag" class="tag muted">Modo: local</span>
+          <span id="firebaseModeTag" class="tag muted">—</span>
         </div>
         <div class="panel-body">
           <div id="firebaseLoggedOut">
@@ -55,10 +55,7 @@
             </div>
           </div>
           <div id="firebaseLoggedIn" style="display: none">
-            <div class="hint" style="margin: 0">
-              <span id="firebaseUserLine"></span><br />
-              UID (debug): <span id="firebaseUserUid" class="mono"></span>
-            </div>
+            <div class="hint" style="margin: 0"><span id="firebaseUserLine"></span></div>
             <div class="form-actions" style="margin-top: 12px">
               <button type="button" id="btnFirebaseSignOut" class="btn danger">Cerrar sesión</button>
             </div>
@@ -67,17 +64,16 @@
       </div>
 
       <div id="firebaseUnauthorized" class="firebase-unauth-banner" style="display: none" role="alert">
-        <strong>Tu usuario no está autorizado para este proyecto.</strong>
-        <p>
-          Debe existir un documento activo en Firestore <span class="mono">projectMembers/{tu UID}</span> con
-          <span class="mono">active: true</span>.
-        </p>
-        <p>Email: <span id="firebaseUnauthEmail" class="mono"></span> · UID: <span id="firebaseUnauthUid" class="mono"></span></p>
+        <strong>Tu cuenta no tiene acceso a este proyecto.</strong>
+        <p>Si necesitas entrar, contacta a quien administra la obra.</p>
+        <p id="firebaseUnauthEmailWrap">Correo: <span id="firebaseUnauthEmail"></span></p>
       </div>
 
       <div id="isdProjectShell">
-      <div class="site-notice" role="note">
-        <strong>Datos:</strong> sin Firebase, los movimientos siguen en este navegador (localStorage). Con Firebase activo y miembro autorizado, los movimientos se leen y guardan en Firestore. Los comprobantes siguen en IndexedDB y no se sincronizan entre dispositivos todavía.
+      <div id="siteDataNotice" class="site-notice" role="note">
+        <strong id="siteNoticeTitle">Sincronización</strong>
+        <p id="siteNoticeBody">—</p>
+        <p id="siteNoticeAttachments" class="hint">Los comprobantes todavía no se sincronizan entre dispositivos.</p>
       </div>
 
       <section class="panel collapsible-section" data-section-id="dashboard" style="margin-top: 16px;">
@@ -86,7 +82,7 @@
             <span class="section-toggle-icon" aria-hidden="true">▼</span>
             <div>
               <h2>Dashboard financiero</h2>
-              <p>Métricas operativas del proyecto; comparativas entre socios irán en una sección aparte más adelante.</p>
+              <p>Resumen de caja, ingresos, gastos y reparto por socio.</p>
             </div>
           </button>
           <span class="tag muted">Proyecto</span>
@@ -153,7 +149,7 @@
             <span class="section-toggle-icon" aria-hidden="true">▼</span>
             <div>
               <h2>Gráficos</h2>
-              <p>Gasto mensual, gasto por categoría y flujo de caja mensual (Chart.js).</p>
+              <p>Gasto mensual, gasto por categoría y flujo de caja mensual.</p>
             </div>
           </button>
           <span class="tag muted">Análisis</span>
@@ -209,9 +205,8 @@
             <span class="section-toggle-icon" aria-hidden="true">▼</span>
             <div>
               <h2>Asistente IA</h2>
-              <p>
-                Con sesión Firebase en Vercel usa OpenAI y datos reales de Firestore (<span class="mono">/api/ai-assistant</span>). Sin conexión o si falla el servidor, queda el asistente local determinístico.
-              </p>
+              <p>Describe un movimiento o haz una consulta sobre el proyecto.</p>
+              <p class="hint">El asistente puede ayudarte a preparar registros y responder preguntas financieras.</p>
             </div>
           </button>
           <span class="tag muted">Asistente</span>
@@ -262,7 +257,7 @@
               <span class="section-toggle-icon" aria-hidden="true">▼</span>
               <div>
                 <h2>Registro de movimiento</h2>
-                <p>Nuevo movimiento: validación del formulario y luego confirmación con PIN. Para editar o eliminar usa la tabla.</p>
+                <p>Registra ingresos, gastos y aportes del proyecto.</p>
               </div>
             </button>
             <span id="movementsCountTag" class="tag muted">0 movimientos</span>
@@ -384,7 +379,7 @@
                   name="comprobante"
                   accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf"
                 />
-                <div class="hint">PDF o imagen. Se almacena en IndexedDB (no en localStorage).</div>
+                <div class="hint">PDF o imagen. Queda guardado en este equipo con el movimiento.</div>
               </label>
 
               <div id="formError" class="error" style="display:none;"></div>
@@ -395,7 +390,7 @@
               </div>
 
               <div class="hint">
-                Comprobantes (imagen/PDF) se almacenan localmente. Exportación a Excel disponible desde “Exportar Excel”.
+                Puedes adjuntar archivos al movimiento. También puedes exportar la tabla desde “Exportar Excel”.
               </div>
             </form>
           </div>
@@ -422,7 +417,7 @@
               <div class="panel-header" style="border-radius: 12px 12px 0 0;">
                 <div>
                   <h2>Filtros de movimientos</h2>
-                  <p>En esta etapa afectan solo la tabla (no el dashboard ni gráficos).</p>
+                  <p>Filtran la tabla de movimientos de abajo.</p>
                 </div>
                 <span class="tag muted">Filtros</span>
               </div>
@@ -707,7 +702,7 @@
             <div class="panel-header" style="border-radius: 12px 12px 0 0;">
               <div>
                 <h2>Comprobante</h2>
-                <p>Subir, reemplazar o eliminar comprobante (IndexedDB).</p>
+                <p>Subir, reemplazar o eliminar archivo adjunto.</p>
               </div>
               <span class="tag muted">Comprobantes</span>
             </div>

@@ -189,6 +189,10 @@ html.access-locked .access-gate {
   font-size: 12px;
 }
 
+.panel-header p + p {
+  margin-top: 6px;
+}
+
 .panel-body { padding: 16px; }
 
 /* Secciones colapsables */
@@ -565,7 +569,14 @@ td {
 
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
-/* Firebase: login y estado de autorización */
+/* Cuenta y sesión */
+.account-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: normal;
+}
+
 .firebase-auth-panel {
   margin-top: 14px;
 }

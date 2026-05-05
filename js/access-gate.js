@@ -53,7 +53,7 @@
         <div style="display:flex; flex-direction:column; gap: 8px;">
           <h2 id="accessGateTitle" style="margin:0; font-size: 16px;">Acceso privado</h2>
           <div class="hint" style="margin:0;">
-            Ingresa la clave para acceder. Esta barrera es temporal; se reemplazará por Supabase Auth.
+            Ingresa la clave para continuar. Para datos del proyecto usa también la sección Cuenta.
           </div>
         </div>
         <label style="margin-top: 10px;">

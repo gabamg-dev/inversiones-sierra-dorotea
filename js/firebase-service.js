@@ -203,7 +203,7 @@
 
   function createMovement(movement) {
     const db = getDb();
-    if (!db) return Promise.reject(new Error("Firestore no disponible."));
+    if (!db) return Promise.reject(new Error("No se pudo acceder a los datos del proyecto."));
     const payload = buildCreatePayload(movement);
     return db
       .collection("movements")
@@ -224,7 +224,7 @@
 
   function updateMovement(id, data) {
     const db = getDb();
-    if (!db) return Promise.reject(new Error("Firestore no disponible."));
+    if (!db) return Promise.reject(new Error("No se pudo acceder a los datos del proyecto."));
     const u = getCurrentUser();
     const FieldValue = firebase.firestore.FieldValue;
     const userLabel = u && u.email ? u.email : u && u.uid ? u.uid : "Usuario";
@@ -241,13 +241,13 @@
 
   function deleteMovement(id) {
     const db = getDb();
-    if (!db) return Promise.reject(new Error("Firestore no disponible."));
+    if (!db) return Promise.reject(new Error("No se pudo acceder a los datos del proyecto."));
     return db.collection("movements").doc(String(id)).delete();
   }
 
   function createAuditLog(log) {
     const db = getDb();
-    if (!db) return Promise.reject(new Error("Firestore no disponible."));
+    if (!db) return Promise.reject(new Error("No se pudo acceder a los datos del proyecto."));
     const u = getCurrentUser();
     const FieldValue = firebase.firestore.FieldValue;
     const entry = stripUndefined({

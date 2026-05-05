@@ -1,6 +1,6 @@
 /* global ISD */
 
-/** Sincronización: Firestore vs localStorage */
+/** Sincronización: nube (sesión) vs copia en este equipo */
 let currentMovements = [];
 let dataMode = "local";
 let currentFirebaseUser = null;
@@ -117,7 +117,7 @@ function getSelectedFile(inputId) {
 async function openAttachmentInNewTab(attachmentId, fileType, fallbackName) {
   if (!window.ISD || !window.ISD.attachments || !window.ISD.attachments.getAttachment) throw new Error("Adjuntos no disponibles.");
   const blob = await window.ISD.attachments.getAttachment(attachmentId);
-  if (!blob) throw new Error("No se encontró el archivo en IndexedDB.");
+  if (!blob) throw new Error("No se encontró el archivo en este dispositivo.");
   const typed = fileType ? new Blob([blob], { type: fileType }) : blob;
   const url = URL.createObjectURL(typed);
   window.open(url, "_blank", "noopener,noreferrer");
@@ -128,7 +128,7 @@ async function openAttachmentInNewTab(attachmentId, fileType, fallbackName) {
 async function downloadAttachment(attachmentId, fileType, fileName) {
   if (!window.ISD || !window.ISD.attachments || !window.ISD.attachments.getAttachment) throw new Error("Adjuntos no disponibles.");
   const blob = await window.ISD.attachments.getAttachment(attachmentId);
-  if (!blob) throw new Error("No se encontró el archivo en IndexedDB.");
+  if (!blob) throw new Error("No se encontró el archivo en este dispositivo.");
   const typed = fileType ? new Blob([blob], { type: fileType }) : blob;
   const url = URL.createObjectURL(typed);
   const a = document.createElement("a");
@@ -623,6 +623,7 @@ function initApp() {
     renderQuickSummary(currentMovements);
     renderCharts(currentMovements);
     renderAuditLogs(auditModalTbody);
+    updateSiteNotice();
   }
 
   const shellEl = document.getElementById("isdProjectShell");
@@ -634,12 +635,32 @@ function initApp() {
       shellEl.style.display = "none";
       firebaseUnauthEl.style.display = "";
       const em = document.getElementById("firebaseUnauthEmail");
-      const uid = document.getElementById("firebaseUnauthUid");
       if (em) em.textContent = user && user.email ? user.email : "";
-      if (uid) uid.textContent = user && user.uid ? user.uid : "";
     } else {
       shellEl.style.display = "";
       firebaseUnauthEl.style.display = "none";
+    }
+  }
+
+  function accountDisplayName(user) {
+    if (!user) return "";
+    const dn = user.displayName && String(user.displayName).trim();
+    if (dn) return dn;
+    const email = (user.email || "").trim();
+    return email || "";
+  }
+
+  function updateSiteNotice() {
+    const title = document.getElementById("siteNoticeTitle");
+    const body = document.getElementById("siteNoticeBody");
+    if (!title || !body) return;
+    if (dataMode === "firebase") {
+      title.textContent = "Sincronización activa";
+      body.textContent = "Los movimientos del proyecto se sincronizan entre tus dispositivos.";
+    } else {
+      title.textContent = "Sin sincronización";
+      body.textContent =
+        "Inicia sesión con una cuenta autorizada para ver los mismos movimientos en todos tus equipos. Sin sesión, los datos quedan solo en este dispositivo.";
     }
   }
 
@@ -649,7 +670,11 @@ function initApp() {
     const loggedOut = document.getElementById("firebaseLoggedOut");
     const loggedIn = document.getElementById("firebaseLoggedIn");
     if (!svc || typeof svc.isAvailable !== "function" || !svc.isAvailable()) {
-      if (tag) tag.textContent = "Modo: local (Firebase no cargado)";
+      if (tag) {
+        tag.textContent = "Sincronización no disponible";
+        tag.className = "tag muted";
+      }
+      updateSiteNotice();
       return;
     }
     const u = svc.getCurrentUser && svc.getCurrentUser();
@@ -658,19 +683,25 @@ function initApp() {
         loggedOut.style.display = "none";
         loggedIn.style.display = "";
         const line = document.getElementById("firebaseUserLine");
-        const uidEl = document.getElementById("firebaseUserUid");
-        if (line) line.textContent = `Conectado: ${u.email || u.uid}`;
-        if (uidEl) uidEl.textContent = u.uid || "";
+        if (line) line.textContent = accountDisplayName(u);
       } else {
         loggedOut.style.display = "";
         loggedIn.style.display = "none";
       }
     }
     if (tag) {
-      if (dataMode === "firebase") tag.textContent = "Modo: Firestore (online)";
-      else if (u) tag.textContent = "Modo: local (sin membresía)";
-      else tag.textContent = "Modo: local";
+      if (dataMode === "firebase") {
+        tag.textContent = "Sincronización activa";
+        tag.className = "tag ok";
+      } else if (u) {
+        tag.textContent = "Sin sincronización";
+        tag.className = "tag muted";
+      } else {
+        tag.textContent = "Sin sesión";
+        tag.className = "tag muted";
+      }
     }
+    updateSiteNotice();
   }
 
   function teardownFirebaseListeners() {
@@ -1081,7 +1112,7 @@ function initApp() {
 
   refreshAllUI();
 
-  // Secciones colapsables (persistidas en localStorage)
+  // Secciones colapsables (se recuerda qué estaba abierto)
   ISD.uiSections.initCollapsibleSections({
     onToggle: function (sectionId, isOpen) {
       if (sectionId === "charts" && isOpen) {
@@ -1317,9 +1348,24 @@ function initApp() {
     return out;
   }
 
+  const REMOTE_MODE_LABEL = {
+    draft: "Borrador IA",
+    answer: "Respuesta IA",
+    needs_more_info: "Falta información",
+  };
+
+  const LOCAL_INTENT_LABEL = {
+    CREATE_MOVEMENT: "Preparar movimiento",
+    QUERY_DATA: "Consulta",
+    UNKNOWN: "Asistente",
+  };
+
   function applyRemoteAiResponse(json) {
     const mode = json.mode || "answer";
-    if (aiIntentTag) aiIntentTag.textContent = `REMOTE_${String(mode).toUpperCase()}`;
+    if (aiIntentTag) {
+      aiIntentTag.textContent = REMOTE_MODE_LABEL[mode] || "Listo";
+      aiIntentTag.className = "tag muted";
+    }
 
     setAiText(aiResponse, json.message || "");
     setVisible(aiResponse, true);
@@ -1348,7 +1394,11 @@ function initApp() {
 
   function applyLocalAiResult(result, prefixMessage) {
     const intent = result && result.intent ? String(result.intent) : "UNKNOWN";
-    if (aiIntentTag) aiIntentTag.textContent = intent;
+    if (aiIntentTag) {
+      const label = LOCAL_INTENT_LABEL[intent] || LOCAL_INTENT_LABEL.UNKNOWN;
+      aiIntentTag.textContent = label;
+      aiIntentTag.className = "tag muted";
+    }
 
     const prefix = prefixMessage ? `${prefixMessage}\n\n` : "";
 
@@ -1459,7 +1509,9 @@ function initApp() {
     const result = ISD.aiAssistant.analyzeUserMessage(text, currentMovements);
     applyLocalAiResult(
       result,
-      remoteFailed ? "No se pudo usar IA real. Se usó asistente local." : ""
+      remoteFailed
+        ? "No hubo conexión con el asistente en línea. Se usó el modo sin conexión."
+        : ""
     );
   }
 
@@ -1473,7 +1525,7 @@ function initApp() {
           aiResponse.textContent = "Borrador cargado al formulario. Revísalo y presiona Guardar movimiento para confirmar con PIN.";
           aiResponse.style.display = "";
         }
-        setText(lastSavedTag, "Borrador IA cargado (no guardado)");
+        setText(lastSavedTag, "Borrador cargado (aún no guardado)");
       } catch (e) {
         if (aiResponse) {
           aiResponse.textContent = `No se pudo cargar el borrador al formulario: ${String(e && e.message ? e.message : e)}`;
@@ -1509,14 +1561,14 @@ function initApp() {
   btnResetDemo.addEventListener("click", () => {
     if (dataMode === "firebase") {
       alert(
-        "Estás en modo Firestore: los movimientos están en la nube. Este botón solo borra datos locales cuando trabajas sin Firebase activo como fuente."
+        "Con sincronización activa, los movimientos del proyecto están centralizados. Para borrar solo la copia en este equipo, primero cierra sesión o usa esta opción solo cuando trabajes sin cuenta."
       );
       return;
     }
     ISD.storage.resetAll();
     currentMovements = [];
     refreshAllUI();
-    setText(lastSavedTag, "Local reseteado");
+    setText(lastSavedTag, "Datos de este equipo borrados");
   });
 
   btnOpenAudit.addEventListener("click", () => {

@@ -116,7 +116,7 @@
         "Comprobante nombre": hasComp ? safeStr(comp.fileName) : "",
         "Comprobante tipo": hasComp ? safeStr(comp.fileType) : "",
         "Comprobante tamaño": hasComp ? fmtMoneyNumber(comp.fileSize) : 0,
-        "Comprobante ID local": hasComp ? safeStr(comp.id) : "",
+        "Ref. comprobante": hasComp ? safeStr(comp.id) : "",
         Creado: safeStr(m.fechaCreacion),
         "Editado por": safeStr(m.editadoPor),
         "Fecha edición": safeStr(m.fechaEdicion),
@@ -164,14 +164,14 @@
         "Aporte capital": fmtMoneyNumber(metrics.aporteCapitalGabriel),
         "Gasto asignado": fmtMoneyNumber(metrics.gastoAsignadoGabriel),
         "Diferencia capital vs otro socio": dif === null ? "" : fmtMoneyNumber(dif),
-        Observación: "Cálculos desde movimientos locales (reports.js).",
+        Observación: "Cifras según movimientos registrados.",
       },
       {
         Socio: "Vania",
         "Aporte capital": fmtMoneyNumber(metrics.aporteCapitalVania),
         "Gasto asignado": fmtMoneyNumber(metrics.gastoAsignadoVania),
         "Diferencia capital vs otro socio": dif === null ? "" : fmtMoneyNumber(-dif),
-        Observación: "Cálculos desde movimientos locales (reports.js).",
+        Observación: "Cifras según movimientos registrados.",
       },
     ];
   }
@@ -192,8 +192,8 @@
         "Nombre archivo": has ? safeStr(comp.fileName) : "",
         "Tipo archivo": has ? safeStr(comp.fileType) : "",
         "Tamaño": has ? fmtMoneyNumber(comp.fileSize) : 0,
-        "ID local IndexedDB": has ? safeStr(comp.id) : "",
-        Observación: has ? "Comprobante almacenado localmente en IndexedDB" : "Sin comprobante",
+        "Ref. adjunto": has ? safeStr(comp.id) : "",
+        Observación: has ? "Comprobante guardado en este dispositivo" : "Sin comprobante",
       };
     });
   }
