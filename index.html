@@ -18,20 +18,21 @@
     <div class="container">
       <header class="app-header">
         <div class="brand" aria-label="Marca">
-          <img class="brand-logo" src="./assets/logo.svg" width="52" height="52" alt="" decoding="async" />
+          <div class="brand-logo-wrap">
+            <img
+              class="brand-logo"
+              src="./assets/logo-sierra-dorotea.png"
+              width="200"
+              height="64"
+              alt="Inversiones Sierra Dorotea"
+              decoding="async"
+              onerror="if(!this.dataset.tryjpg){this.dataset.tryjpg='1';this.src='./assets/logo-sierra-dorotea.jpg';return;}this.onerror=null;this.src='./assets/logo.svg';"
+            />
+          </div>
           <div class="brand-title">
             <span class="brand-name">Inversiones Sierra Dorotea</span>
-            <span class="brand-tagline">Control financiero del proyecto</span>
+            <span class="brand-subtitle">Control financiero del proyecto</span>
           </div>
-        </div>
-
-        <div class="header-actions">
-          <button id="btnLockAccess" class="btn" type="button" title="Vuelve a pedir clave de acceso">
-            Bloquear sesión
-          </button>
-          <button id="btnResetDemo" class="btn danger" type="button" title="Borra la copia de datos guardada en este dispositivo (solo si no usas sesión con sincronización)">
-            Borrar datos en este equipo
-          </button>
         </div>
       </header>
 
@@ -61,11 +62,27 @@
             </div>
           </div>
           <div id="firebaseLoggedIn" style="display: none">
-            <div class="hint" style="margin: 0"><span id="firebaseUserLine"></span></div>
-            <div class="form-actions" style="margin-top: 12px">
-              <button type="button" id="btnFirebaseSignOut" class="btn danger">Cerrar sesión</button>
-            </div>
+            <div class="hint account-user-line" style="margin: 0"><span id="firebaseUserLine"></span></div>
           </div>
+
+          <div class="account-session-actions" aria-label="Sesión y acceso">
+            <button type="button" id="btnFirebaseSignOut" class="btn btn--subtle" style="display: none">
+              Cerrar sesión
+            </button>
+            <button type="button" id="btnLockAccess" class="btn btn--subtle">Bloquear sesión</button>
+          </div>
+
+          <details class="account-advanced">
+            <summary class="account-advanced-summary">Configuración avanzada</summary>
+            <div class="account-advanced-body">
+              <p class="hint account-advanced-hint">
+                Esta acción solo elimina datos guardados localmente en este navegador. No elimina movimientos guardados en la nube.
+              </p>
+              <button type="button" id="btnResetDemo" class="btn btn--danger-soft">
+                Limpiar datos locales de este equipo
+              </button>
+            </div>
+          </details>
         </div>
       </div>
 

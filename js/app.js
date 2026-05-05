@@ -736,15 +736,23 @@ function initApp() {
     const svc = ISD.firebaseService;
     const loggedOut = document.getElementById("firebaseLoggedOut");
     const loggedIn = document.getElementById("firebaseLoggedIn");
+    const btnSignOut = document.getElementById("btnFirebaseSignOut");
+
+    function setSignOutVisible(v) {
+      if (btnSignOut) btnSignOut.style.display = v ? "inline-flex" : "none";
+    }
+
     if (!svc || typeof svc.isAvailable !== "function" || !svc.isAvailable()) {
       if (tag) {
         tag.textContent = "Sincronización no disponible";
         tag.className = "tag muted";
       }
+      setSignOutVisible(false);
       updateSiteNotice();
       return;
     }
     const u = svc.getCurrentUser && svc.getCurrentUser();
+    setSignOutVisible(Boolean(u));
     if (loggedOut && loggedIn) {
       if (u) {
         loggedOut.style.display = "none";
@@ -1628,14 +1636,18 @@ function initApp() {
   btnResetDemo.addEventListener("click", () => {
     if (dataMode === "firebase") {
       alert(
-        "Con sincronización activa, los movimientos del proyecto están centralizados. Para borrar solo la copia en este equipo, primero cierra sesión o usa esta opción solo cuando trabajes sin cuenta."
+        "Con sincronización activa, los movimientos del proyecto están en la nube. Esta opción no los elimina. Cierra sesión antes si quieres limpiar solo la copia local de este navegador."
       );
       return;
     }
+    const ok = window.confirm(
+      "¿Limpiar datos locales de este navegador?\n\nNo se eliminan movimientos guardados en la nube. Solo se borra la copia en este equipo."
+    );
+    if (!ok) return;
     ISD.storage.resetAll();
     currentMovements = [];
     refreshAllUI();
-    setText(lastSavedTag, "Datos de este equipo borrados");
+    setText(lastSavedTag, "Datos locales de este equipo borrados");
   });
 
   btnOpenAudit.addEventListener("click", () => {

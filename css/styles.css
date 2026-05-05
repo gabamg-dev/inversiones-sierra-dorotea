@@ -105,7 +105,7 @@ a {
 header.app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 14px;
   padding: 16px 18px;
@@ -124,59 +124,60 @@ header.app-header {
   flex: 1;
 }
 
-.brand-logo {
-  width: 52px;
-  height: 52px;
+.brand-logo-wrap {
   flex-shrink: 0;
-  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: min(220px, 46vw);
+  max-height: 56px;
+}
+
+.brand-logo-wrap .brand-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 52px;
+  max-width: 100%;
   object-fit: contain;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--border-gold);
-  background: var(--panel);
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .brand-title {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   line-height: 1.2;
   min-width: 0;
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 3.5vw, 1.45rem);
+  font-size: clamp(1.05rem, 3.2vw, 1.45rem);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text);
   margin: 0;
 }
 
-.brand-tagline {
-  font-size: 0.8rem;
+.brand-subtitle {
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 @media (max-width: 520px) {
-  .header-actions {
-    width: 100%;
-    justify-content: stretch;
+  .brand-logo-wrap {
+    max-width: min(160px, 40vw);
+    max-height: 48px;
   }
-  .header-actions .btn {
-    flex: 1;
-    min-width: calc(50% - 5px);
-    justify-content: center;
+  .brand-logo-wrap .brand-logo {
+    max-height: 44px;
   }
 }
 
@@ -222,9 +223,40 @@ header.app-header {
   color: #f0b4b4;
 }
 
+.btn--subtle {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: transparent;
+  border-color: rgba(242, 240, 232, 0.12);
+  color: var(--text-secondary);
+}
+
+.btn--subtle:hover {
+  border-color: var(--border-gold);
+  color: var(--text);
+  background: rgba(201, 162, 39, 0.06);
+}
+
+.btn--danger-soft {
+  background: rgba(224, 112, 112, 0.12);
+  border-color: rgba(224, 112, 112, 0.28);
+  color: #f0c4c4;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.btn--danger-soft:hover {
+  background: rgba(224, 112, 112, 0.2);
+  border-color: rgba(224, 112, 112, 0.4);
+}
+
 @media (max-width: 768px) {
   .btn {
     min-height: 44px;
+  }
+  .btn--subtle {
+    min-height: 40px;
   }
 }
 
@@ -1048,6 +1080,65 @@ html.access-locked .access-gate {
   font-weight: 400;
   text-transform: none;
   letter-spacing: normal;
+}
+
+.account-user-line {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.account-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.account-advanced {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 12, 22, 0.35);
+  padding: 0 12px;
+}
+
+.account-advanced-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.account-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-advanced-summary::before {
+  content: "▸ ";
+  color: var(--gold);
+  font-size: 0.7em;
+  margin-right: 4px;
+}
+
+.account-advanced[open] .account-advanced-summary::before {
+  content: "▾ ";
+}
+
+.account-advanced-body {
+  padding: 0 4px 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+}
+
+.account-advanced-hint {
+  margin: 12px 0 12px;
+  line-height: 1.5;
 }
 
 .firebase-auth-panel {
