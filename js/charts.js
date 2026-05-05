@@ -30,11 +30,30 @@
     return el;
   }
 
+  function chartColors() {
+    return {
+      gold: "rgba(201, 162, 39, 0.55)",
+      goldBorder: "rgba(232, 212, 139, 0.55)",
+      doughnut: [
+        "rgba(201, 162, 39, 0.65)",
+        "rgba(232, 212, 139, 0.45)",
+        "rgba(139, 105, 20, 0.5)",
+        "rgba(110, 184, 154, 0.45)",
+        "rgba(224, 112, 112, 0.4)",
+        "rgba(139, 149, 168, 0.35)",
+      ],
+      ingreso: "rgba(110, 184, 154, 0.35)",
+      gasto: "rgba(224, 112, 112, 0.28)",
+      saldoLine: "rgba(232, 212, 139, 0.85)",
+    };
+  }
+
   function renderGastoMensualChart(canvasId, rows) {
     ensureChartJs();
     const canvas = getCanvas(canvasId);
     const labels = (rows || []).map((r) => r.label);
     const data = (rows || []).map((r) => r.total);
+    const C = chartColors();
 
     if (!labels.length) {
       if (_charts.has(canvasId)) {
@@ -57,8 +76,8 @@
           {
             label: "Gasto mensual",
             data,
-            backgroundColor: "rgba(110, 231, 255, 0.22)",
-            borderColor: "rgba(110, 231, 255, 0.6)",
+            backgroundColor: C.gold,
+            borderColor: C.goldBorder,
             borderWidth: 1,
           },
         ],
@@ -68,7 +87,14 @@
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          y: { ticks: { callback: (v) => String(v) } },
+          x: {
+            ticks: { color: "rgba(200, 204, 214, 0.85)" },
+            grid: { color: "rgba(255,255,255,0.04)" },
+          },
+          y: {
+            ticks: { color: "rgba(200, 204, 214, 0.85)", callback: (v) => String(v) },
+            grid: { color: "rgba(255,255,255,0.06)" },
+          },
         },
       },
     });
@@ -96,13 +122,8 @@
       _charts.delete(canvasId);
     }
 
-    const colors = [
-      "rgba(167, 139, 250, 0.55)",
-      "rgba(110, 231, 255, 0.55)",
-      "rgba(94, 234, 212, 0.55)",
-      "rgba(255, 107, 107, 0.55)",
-      "rgba(231, 236, 255, 0.35)",
-    ];
+    const C = chartColors();
+    const colors = C.doughnut;
 
     const chart = new global.Chart(canvas, {
       type: "doughnut",
@@ -113,7 +134,7 @@
             label: "Gasto por categoría",
             data,
             backgroundColor: labels.map((_, i) => colors[i % colors.length]),
-            borderColor: "rgba(231, 236, 255, 0.14)",
+            borderColor: "rgba(242, 240, 232, 0.12)",
             borderWidth: 1,
           },
         ],
@@ -121,7 +142,12 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: "bottom" } },
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { color: "rgba(200, 204, 214, 0.92)", padding: 14 },
+          },
+        },
       },
     });
 
@@ -151,16 +177,45 @@
       _charts.delete(canvasId);
     }
 
+    const C = chartColors();
+
     const chart = new global.Chart(canvas, {
       data: {
         labels,
         datasets: [
-          { type: "bar", label: "Ingresos", data: ingresos, backgroundColor: "rgba(94, 234, 212, 0.25)" },
-          { type: "bar", label: "Gastos", data: gastos, backgroundColor: "rgba(255, 107, 107, 0.18)" },
-          { type: "line", label: "Saldo acumulado", data: saldo, borderColor: "rgba(110, 231, 255, 0.8)", tension: 0.25 },
+          { type: "bar", label: "Ingresos", data: ingresos, backgroundColor: C.ingreso },
+          { type: "bar", label: "Gastos", data: gastos, backgroundColor: C.gasto },
+          {
+            type: "line",
+            label: "Saldo acumulado",
+            data: saldo,
+            borderColor: C.saldoLine,
+            backgroundColor: "rgba(232, 212, 139, 0.06)",
+            tension: 0.25,
+            fill: false,
+            borderWidth: 2,
+          },
         ],
       },
-      options: { responsive: true, maintainAspectRatio: false },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: "rgba(200, 204, 214, 0.92)" },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: "rgba(200, 204, 214, 0.85)" },
+            grid: { color: "rgba(255,255,255,0.04)" },
+          },
+          y: {
+            ticks: { color: "rgba(200, 204, 214, 0.85)" },
+            grid: { color: "rgba(255,255,255,0.06)" },
+          },
+        },
+      },
     });
 
     _charts.set(canvasId, chart);

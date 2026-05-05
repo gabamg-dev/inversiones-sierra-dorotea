@@ -6,16 +6,22 @@
     <title>Inversiones Sierra Dorotea</title>
     <meta name="description" content="Control financiero local para proyecto inmobiliario - Inversiones Sierra Dorotea." />
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
   <body>
     <div class="container">
       <header class="app-header">
         <div class="brand" aria-label="Marca">
-          <div class="brand-mark" aria-hidden="true"></div>
+          <img class="brand-logo" src="./assets/logo.svg" width="52" height="52" alt="" decoding="async" />
           <div class="brand-title">
-            <strong>Inversiones Sierra Dorotea</strong>
-            <span>Control financiero del proyecto</span>
+            <span class="brand-name">Inversiones Sierra Dorotea</span>
+            <span class="brand-tagline">Control financiero del proyecto</span>
           </div>
         </div>
 
@@ -405,7 +411,7 @@
                 <p>Movimientos registrados del proyecto.</p>
               </div>
             </button>
-            <div class="header-actions">
+            <div class="header-actions movements-panel-actions">
               <button id="btnOpenAudit" class="btn" type="button">Ver historial de acciones</button>
               <button id="btnExportExcel" class="btn" type="button">Exportar Excel</button>
               <span id="movementsFilteredCount" class="tag muted">Mostrando 0 de 0</span>
@@ -501,31 +507,34 @@
               </div>
             </div>
 
-            <div class="table-wrap">
-              <table aria-label="Tabla de movimientos">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Tipo</th>
-                    <th>Categoría</th>
-                    <th>Descripción</th>
-                    <th class="mono">Monto</th>
-                    <th class="mono">Gabriel</th>
-                    <th class="mono">Vania</th>
-                    <th>Medio salida</th>
-                    <th>Estado</th>
-                    <th>Comprobante</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="movementsTbody">
-                  <tr>
-                    <td colspan="11" class="tag muted" style="border: none; margin: 10px;">
-                      Aún no hay movimientos. Registra el primero desde el formulario.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div id="movementsHost" class="movements-host">
+              <div class="table-wrap table-wrap--movements-only">
+                <table aria-label="Tabla de movimientos">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Categoría</th>
+                      <th>Descripción</th>
+                      <th class="mono">Monto</th>
+                      <th class="mono">Gabriel</th>
+                      <th class="mono">Vania</th>
+                      <th>Medio salida</th>
+                      <th>Estado</th>
+                      <th>Comprobante</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="movementsTbody">
+                    <tr>
+                      <td colspan="11" class="tag muted" style="border: none; margin: 10px;">
+                        Aún no hay movimientos. Registra el primero desde el formulario.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="movementsCardList" class="movements-cards" aria-label="Movimientos (vista móvil)"></div>
             </div>
           </div>
         </section>

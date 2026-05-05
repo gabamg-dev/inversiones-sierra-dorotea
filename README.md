@@ -2,6 +2,11 @@
 
 Aplicación web local (HTML + CSS + JS) para controlar el flujo financiero de un proyecto inmobiliario (construcción de vivienda).
 
+### Identidad visual y layout
+- Paleta institucional y tokens en `css/styles.css` (`:root`): fondos midnight navy, acentos dorados, texto cálido / grises.
+- Tipografías: **Cormorant Garamond** (títulos) y **DM Sans** (interfaz), cargadas vía Google Fonts en `index.html`.
+- **Móvil (≤768px):** formulario a una columna, cabecera y acciones flexibles, lista de movimientos en **tarjetas** (`#movementsCardList`); la tabla ancha permanece en escritorio con scroll horizontal contenido en `.table-wrap`.
+
 ### Interfaz y mensajes (usuarios finales)
 La pantalla principal prioriza textos claros para gestión del proyecto: no muestra detalles de implementación (servicios en la nube, almacenamiento del navegador, endpoints, etc.). Esa información queda en este README y en `docs/`. Los **comprobantes** (archivos adjuntos) siguen sin sincronización entre dispositivos hasta una futura fase en la nube.
 

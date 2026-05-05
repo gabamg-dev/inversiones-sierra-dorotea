@@ -140,8 +140,75 @@ async function downloadAttachment(attachmentId, fileType, fileName) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+function movementComprobanteHtml(m) {
+  const comp = m.comprobante;
+  if (!comp) return `<span class="tag muted att-badge-missing">Sin comprobante</span>`;
+  return `<div class="att-cell">
+           <div><span class="tag ok">Con comprobante</span></div>
+           <div class="att-name mono" title="${escapeHtml(comp.fileName || "")}">${escapeHtml(comp.fileName || "")}</div>
+           <div class="att-size">${escapeHtml(ISD.attachments.formatFileSize(comp.fileSize || 0))}</div>
+           <div class="att-actions">
+             <button type="button" class="btn" data-action="view-attachment" data-att-id="${escapeHtml(comp.id)}" data-att-type="${escapeHtml(comp.fileType || "")}" data-att-name="${escapeHtml(comp.fileName || "")}">Ver</button>
+             <button type="button" class="btn" data-action="download-attachment" data-att-id="${escapeHtml(comp.id)}" data-att-type="${escapeHtml(comp.fileType || "")}" data-att-name="${escapeHtml(comp.fileName || "")}">Descargar</button>
+           </div>
+         </div>`;
+}
+
+function movementEditedHtml(m) {
+  if (!m.editadoPor || !m.fechaEdicion) return "";
+  return `<div class="edited-meta">Editado por ${escapeHtml(m.editadoPor)} — ${escapeHtml(new Date(m.fechaEdicion).toLocaleString("es-CL"))}</div>`;
+}
+
+function buildMovementCardHtml(m) {
+  const categoria = (m.categoria && String(m.categoria).trim()) || "Sin categoría";
+  const subcategoria = (m.subcategoria && String(m.subcategoria).trim()) || "Sin subcategoría";
+  const tipo = String(m.tipo || "").toLowerCase();
+  const tipoClass = tipo === "ingreso" ? "positive" : tipo === "gasto" ? "negative" : "muted";
+  const medioSalida = String(m.cuentaMedioSalida || m.pagadoPor || "").trim() || "—";
+  const mid = escapeHtml(m.id || "");
+  const editedInfo = movementEditedHtml(m);
+  const rawDesc = String(m.descripcion || "").trim();
+  let descInner = escapeHtml(rawDesc);
+  if (editedInfo) descInner += (rawDesc ? "<br/>" : "") + editedInfo;
+  const descBlock = descInner ? `<div class="movement-card__desc">${descInner}</div>` : "";
+
+  return `
+    <div class="movement-card__top">
+      <span class="movement-card__date">${escapeHtml(m.fecha || "")}</span>
+      <span class="tag ${tipoClass}">${escapeHtml(m.tipo || "")}</span>
+    </div>
+    <div class="movement-card__cat">
+      <div class="cat-primary">${escapeHtml(categoria)}</div>
+      <div class="cat-sub">${escapeHtml(subcategoria)}</div>
+    </div>
+    ${descBlock}
+    <div class="movement-card__monto">${formatMoneyCLP(m.montoTotal)}</div>
+    <div class="movement-card__split">
+      <div>Gabriel <span class="mono">${formatMoneyCLP(m.aporteGabriel)}</span></div>
+      <div>Vania <span class="mono">${formatMoneyCLP(m.aporteVania)}</span></div>
+    </div>
+    <div class="movement-card__row">
+      <span class="movement-card__label">Medio</span>
+      <span class="tag muted">${escapeHtml(medioSalida)}</span>
+    </div>
+    <div class="movement-card__row">
+      <span class="movement-card__label">Estado</span>
+      ${renderEstadoTag(m.estado)}
+    </div>
+    <div class="movement-card__actions">
+      <button type="button" class="btn primary" data-action="edit-movement" data-id="${mid}">Editar</button>
+      <button type="button" class="btn danger" data-action="delete-movement" data-id="${mid}">Eliminar</button>
+    </div>
+    <div class="movement-card__comp">${movementComprobanteHtml(m)}</div>
+  `;
+}
+
 function renderMovementsTable(tbody, movements) {
+  const cardList = document.getElementById("movementsCardList");
   tbody.innerHTML = "";
+  if (cardList) cardList.innerHTML = "";
+
+  const emptyMsg = "Aún no hay movimientos. Registra el primero desde el formulario.";
 
   if (!movements.length) {
     const tr = document.createElement("tr");
@@ -149,9 +216,15 @@ function renderMovementsTable(tbody, movements) {
     td.colSpan = 11;
     td.className = "tag muted";
     td.style.border = "none";
-    td.textContent = "Aún no hay movimientos. Registra el primero desde el formulario.";
+    td.textContent = emptyMsg;
     tr.appendChild(td);
     tbody.appendChild(tr);
+    if (cardList) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = emptyMsg;
+      cardList.appendChild(empty);
+    }
     return;
   }
 
@@ -163,28 +236,15 @@ function renderMovementsTable(tbody, movements) {
     const tipoClass = tipo === "ingreso" ? "positive" : tipo === "gasto" ? "negative" : "muted";
     const medioSalida = String(m.cuentaMedioSalida || m.pagadoPor || "").trim() || "—";
     const mid = escapeHtml(m.id || "");
-    const editedInfo = m.editadoPor && m.fechaEdicion
-      ? `<div style="margin-top:6px;color: rgba(167, 177, 214, 0.95); font-size: 12px;">Editado por ${escapeHtml(m.editadoPor)} — ${escapeHtml(new Date(m.fechaEdicion).toLocaleString("es-CL"))}</div>`
-      : "";
-    const comp = m.comprobante;
-    const compHtml = comp
-      ? `<div class="att-cell">
-           <div><span class="tag ok">Con comprobante</span></div>
-           <div class="att-name mono" title="${escapeHtml(comp.fileName || "")}">${escapeHtml(comp.fileName || "")}</div>
-           <div class="att-size">${escapeHtml(ISD.attachments.formatFileSize(comp.fileSize || 0))}</div>
-           <div class="att-actions">
-             <button type="button" class="btn" data-action="view-attachment" data-att-id="${escapeHtml(comp.id)}" data-att-type="${escapeHtml(comp.fileType || "")}" data-att-name="${escapeHtml(comp.fileName || "")}">Ver</button>
-             <button type="button" class="btn" data-action="download-attachment" data-att-id="${escapeHtml(comp.id)}" data-att-type="${escapeHtml(comp.fileType || "")}" data-att-name="${escapeHtml(comp.fileName || "")}">Descargar</button>
-           </div>
-         </div>`
-      : `<span class="tag muted att-badge-missing">Sin comprobante</span>`;
+    const editedInfo = movementEditedHtml(m);
+    const compHtml = movementComprobanteHtml(m);
 
     tr.innerHTML = `
       <td>${m.fecha || ""}</td>
       <td><span class="tag ${tipoClass}">${escapeHtml(m.tipo || "")}</span></td>
       <td>
-        <div><strong>${escapeHtml(categoria)}</strong></div>
-        <div class="mono" style="color: rgba(167, 177, 214, 0.95); font-size: 12px;">${escapeHtml(subcategoria)}</div>
+        <div class="cat-primary">${escapeHtml(categoria)}</div>
+        <div class="cat-sub">${escapeHtml(subcategoria)}</div>
       </td>
       <td>${escapeHtml(m.descripcion || "")}${editedInfo}</td>
       <td class="mono">${formatMoneyCLP(m.montoTotal)}</td>
@@ -199,6 +259,13 @@ function renderMovementsTable(tbody, movements) {
       </td>
     `;
     tbody.appendChild(tr);
+
+    if (cardList) {
+      const article = document.createElement("article");
+      article.className = "movement-card";
+      article.innerHTML = buildMovementCardHtml(m);
+      cardList.appendChild(article);
+    }
   }
 }
 
@@ -1659,7 +1726,9 @@ function initApp() {
     openPinModal({ action: "update", id: currentEditId, draft, attachmentFile: newFile, deleteAttachment: wantsDelete });
   });
 
-  movementsTbody.addEventListener("click", (e) => {
+  const movementsHost = document.getElementById("movementsHost");
+  const movementsClickRoot = movementsHost || movementsTbody;
+  movementsClickRoot.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-action]");
     if (!btn) return;
     const action = btn.getAttribute("data-action");
