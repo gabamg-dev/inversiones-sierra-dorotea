@@ -5,7 +5,7 @@ Aplicación web local (HTML + CSS + JS) para controlar el flujo financiero de un
 ### Identidad visual y layout
 - Paleta institucional y tokens en `css/styles.css` (`:root`): fondos midnight navy, acentos dorados, texto cálido / grises.
 - Tipografías: **Cormorant Garamond** (títulos) y **DM Sans** (interfaz), cargadas vía Google Fonts en `index.html`.
-- **Logo:** el encabezado usa `assets/logo-sierra-dorotea.jpg` (imagen oficial en esa ruta).
+- **Logo:** el encabezado usa `assets/logo-sierra-dorotea.png` (imagen oficial en esa ruta).
 - La cabecera principal solo muestra marca (logo + nombre); **Bloquear sesión**, **Cerrar sesión** y **Limpiar datos locales** están en la sección **Cuenta** / **Configuración avanzada**.
 - **Móvil (≤768px):** formulario a una columna, cabecera y acciones flexibles, lista de movimientos en **tarjetas** (`#movementsCardList`); la tabla ancha permanece en escritorio con scroll horizontal contenido en `.table-wrap`.
 
