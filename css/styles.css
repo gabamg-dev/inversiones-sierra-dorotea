@@ -1014,24 +1014,127 @@ td {
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 18px;
-  background: rgba(5, 8, 15, 0.88);
-  backdrop-filter: blur(12px);
+  padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 15%, rgba(201, 162, 39, 0.08), transparent 55%),
+    rgba(5, 8, 15, 0.92);
+  backdrop-filter: blur(14px);
   z-index: 9999;
 }
 
-.access-gate-card {
-  width: min(520px, 100%);
-  border: 1px solid var(--border-gold);
-  background: linear-gradient(180deg, rgba(22, 32, 52, 0.96) 0%, rgba(12, 18, 32, 0.94) 100%);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 22px;
+.access-gate-inner {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  margin: auto;
 }
 
-.access-gate-card h2 {
+.access-gate-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.access-gate-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 128px;
+  max-width: min(300px, 82vw);
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.45));
+}
+
+.access-gate-title {
   font-family: var(--font-display);
+  font-size: clamp(1.25rem, 4.2vw, 1.65rem);
   font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.access-gate-subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  max-width: 28em;
+  line-height: 1.45;
+}
+
+.access-gate-card {
+  width: 100%;
+  border: 1px solid var(--border-gold);
+  background: linear-gradient(180deg, rgba(22, 32, 52, 0.97) 0%, rgba(12, 18, 32, 0.95) 100%);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px 20px;
+}
+
+.access-gate-lead {
+  margin: 0 0 14px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.access-gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.access-gate-error {
+  margin-top: 10px;
+}
+
+.access-gate-actions {
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.access-gate-actions .btn {
+  min-width: min(280px, 100%);
+}
+
+@media (max-width: 520px) {
+  .access-gate-inner {
+    gap: 20px;
+  }
+
+  .access-gate-logo {
+    max-height: 92px;
+    max-width: min(240px, 72vw);
+  }
+
+  .access-gate-card {
+    padding: 18px 16px;
+  }
+
+  .access-gate-actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 html.access-locked .container {

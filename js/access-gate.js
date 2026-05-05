@@ -49,20 +49,27 @@
     overlay.id = "accessGateOverlay";
     overlay.className = "access-gate";
     overlay.innerHTML = `
-      <div class="access-gate-card" role="dialog" aria-modal="true" aria-labelledby="accessGateTitle">
-        <div style="display:flex; flex-direction:column; gap: 8px;">
-          <h2 id="accessGateTitle" style="margin:0; font-size: 16px;">Acceso privado</h2>
-          <div class="hint" style="margin:0;">
-            Ingresa la clave para continuar. Para datos del proyecto usa también la sección Cuenta.
+      <div class="access-gate-inner">
+        <header class="access-gate-hero">
+          <img
+            src="./assets/logo-sierra-dorotea.png"
+            alt=""
+            class="access-gate-logo"
+            decoding="async"
+          />
+          <h1 id="accessGateTitle" class="access-gate-title">Inversiones Sierra Dorotea</h1>
+          <p class="access-gate-subtitle">Control financiero del proyecto</p>
+        </header>
+        <div class="access-gate-card" role="dialog" aria-modal="true" aria-labelledby="accessGateTitle">
+          <p class="access-gate-lead">Introduce la clave para continuar.</p>
+          <label class="access-gate-field">
+            Clave de acceso
+            <input id="accessGatePassword" type="password" autocomplete="current-password" />
+          </label>
+          <div id="accessGateError" class="error access-gate-error" style="display:none;"></div>
+          <div class="form-actions access-gate-actions">
+            <button id="btnAccessGateEnter" class="btn primary" type="button">Ingresar</button>
           </div>
-        </div>
-        <label style="margin-top: 10px;">
-          Clave de acceso
-          <input id="accessGatePassword" type="password" autocomplete="current-password" />
-        </label>
-        <div id="accessGateError" class="error" style="display:none; margin-top: 10px;"></div>
-        <div class="form-actions" style="margin-top: 12px;">
-          <button id="btnAccessGateEnter" class="btn primary" type="button">Ingresar</button>
         </div>
       </div>
     `;
