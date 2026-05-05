@@ -262,6 +262,14 @@
     return db.collection("auditLogs").add(entry);
   }
 
+  function getIdToken(forceRefresh) {
+    const u = getCurrentUser();
+    if (!u || typeof u.getIdToken !== "function") {
+      return Promise.reject(new Error("No hay usuario autenticado."));
+    }
+    return u.getIdToken(Boolean(forceRefresh));
+  }
+
   function watchAuditLogs(callback) {
     const db = getDb();
     if (!db) return function () {};
@@ -282,6 +290,7 @@
   global.ISD.firebaseService = {
     isAvailable,
     getCurrentUser,
+    getIdToken,
     onAuthStateChanged,
     signIn,
     signOut,

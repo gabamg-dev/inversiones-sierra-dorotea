@@ -1299,22 +1299,61 @@ function initApp() {
     if (aiIntentTag) aiIntentTag.textContent = "Listo";
   }
 
-  function handleAiAnalyze() {
-    if (!aiInput) return;
-    const text = String(aiInput.value || "").trim();
-    resetAiUI();
-    if (!text) {
-      setAiText(aiResponse, "Escribe una instrucción o pregunta para analizar.");
-      setAiVisible(aiResponse, true);
-      return;
+  function normalizeRemoteDraft(d) {
+    if (!d || typeof d !== "object") return null;
+    const out = { ...d };
+    if (out.montoTotal != null) {
+      const n = Number(out.montoTotal);
+      out.montoTotal = Number.isFinite(n) ? n : out.montoTotal;
+    }
+    const r = String(out.reparto || "").toLowerCase();
+    if (r.includes("gabriel")) out.reparto = "gabriel";
+    else if (r.includes("vania")) out.reparto = "vania";
+    else if (r.includes("ambos") || r.includes("50") || r === "50/50") out.reparto = "ambos";
+    const t = String(out.tipo || "").toLowerCase();
+    if (t.includes("ingreso")) out.tipo = "ingreso";
+    else if (t.includes("gasto")) out.tipo = "gasto";
+    else if (t.includes("ajuste")) out.tipo = "ajuste";
+    return out;
+  }
+
+  function applyRemoteAiResponse(json) {
+    const mode = json.mode || "answer";
+    if (aiIntentTag) aiIntentTag.textContent = `REMOTE_${String(mode).toUpperCase()}`;
+
+    setAiText(aiResponse, json.message || "");
+    setVisible(aiResponse, true);
+
+    const mr = json.missingRequired || [];
+    const mo = json.missingOptional || [];
+    setAiText(aiMissingRequired, mr.length ? `Faltan: ${mr.map(aiFieldLabel).join(", ")}` : "OK (obligatorios)");
+    setAiText(aiMissingOptional, mo.length ? `Opcionales: ${mo.map(aiFieldLabel).join(", ")}` : "OK");
+
+    if (json.warnings && json.warnings.length) {
+      /* opcional: podríamos mostrar warnings en aiResponse; el mensaje principal ya viene en json.message */
     }
 
-    const result = ISD.aiAssistant.analyzeUserMessage(text, currentMovements);
+    const normalized = json.draft ? normalizeRemoteDraft(json.draft) : null;
+    if (normalized && Object.keys(normalized).length) {
+      lastAiDraft = normalized;
+      setAiText(aiPreview, formatAiDraftPreview(lastAiDraft));
+      const canLoad = mr.length === 0;
+      if (btnAiLoadDraft) btnAiLoadDraft.disabled = !canLoad;
+    } else {
+      lastAiDraft = null;
+      setAiText(aiPreview, "—");
+      if (btnAiLoadDraft) btnAiLoadDraft.disabled = true;
+    }
+  }
+
+  function applyLocalAiResult(result, prefixMessage) {
     const intent = result && result.intent ? String(result.intent) : "UNKNOWN";
     if (aiIntentTag) aiIntentTag.textContent = intent;
 
+    const prefix = prefixMessage ? `${prefixMessage}\n\n` : "";
+
     if (intent === "QUERY_DATA") {
-      setAiText(aiResponse, result.answer || "");
+      setAiText(aiResponse, prefix + (result.answer || ""));
       setAiVisible(aiResponse, true);
       return;
     }
@@ -1325,7 +1364,11 @@ function initApp() {
 
       if (missingReq.length) {
         setAiText(aiMissingRequired, `Faltan: ${missingReq.join(", ")}`);
-        setAiText(aiResponse, "Me faltan datos obligatorios. Puedes responder en el mismo texto agregando lo faltante (ej: fecha, categoría/subcategoría, estado, método de pago...).");
+        setAiText(
+          aiResponse,
+          prefix +
+            "Me faltan datos obligatorios. Puedes responder en el mismo texto agregando lo faltante (ej: fecha, categoría/subcategoría, estado, método de pago...)."
+        );
         setAiVisible(aiResponse, true);
       } else {
         setAiText(aiMissingRequired, "OK (completo)");
@@ -1343,18 +1386,81 @@ function initApp() {
         lastAiDraft = result.draft || null;
         if (btnAiLoadDraft) btnAiLoadDraft.disabled = false;
         if (!missingOpt.length) {
-          setAiText(aiResponse, "El borrador está completo. Si quieres, cárgalo al formulario para revisarlo y guardarlo (con PIN).");
+          setAiText(
+            aiResponse,
+            prefix + "El borrador está completo. Si quieres, cárgalo al formulario para revisarlo y guardarlo (con PIN)."
+          );
           setAiVisible(aiResponse, true);
         } else {
-          setAiText(aiResponse, "El movimiento puede guardarse. Si quieres, cárgalo al formulario; los campos opcionales puedes completarlos después.");
+          setAiText(
+            aiResponse,
+            prefix +
+              "El movimiento puede guardarse. Si quieres, cárgalo al formulario; los campos opcionales puedes completarlos después."
+          );
           setAiVisible(aiResponse, true);
         }
       }
       return;
     }
 
-    setAiText(aiResponse, result.answer || "No pude entender la intención. Prueba con una instrucción de registro o una consulta (ej: “caja actual”).");
+    setAiText(
+      aiResponse,
+      prefix + (result.answer || "No pude entender la intención. Prueba con una instrucción de registro o una consulta (ej: “caja actual”).")
+    );
     setAiVisible(aiResponse, true);
+  }
+
+  async function handleAiAnalyze() {
+    if (!aiInput) return;
+    const text = String(aiInput.value || "").trim();
+    resetAiUI();
+    if (!text) {
+      setAiText(aiResponse, "Escribe una instrucción o pregunta para analizar.");
+      setAiVisible(aiResponse, true);
+      return;
+    }
+
+    const tryRemote =
+      dataMode === "firebase" &&
+      ISD.firebaseService &&
+      ISD.firebaseService.isAvailable &&
+      ISD.firebaseService.isAvailable() &&
+      typeof ISD.firebaseService.getIdToken === "function";
+
+    let remoteFailed = false;
+
+    if (tryRemote) {
+      try {
+        const token = await ISD.firebaseService.getIdToken(false);
+        const res = await fetch("/api/ai-assistant", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: text,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            currentDate: new Date().toISOString(),
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (json && json.ok) {
+          applyRemoteAiResponse(json);
+          return;
+        }
+        throw new Error(json.message || json.error || "Respuesta inválida del servidor.");
+      } catch (e) {
+        remoteFailed = true;
+        console.warn("IA remota:", e);
+      }
+    }
+
+    const result = ISD.aiAssistant.analyzeUserMessage(text, currentMovements);
+    applyLocalAiResult(
+      result,
+      remoteFailed ? "No se pudo usar IA real. Se usó asistente local." : ""
+    );
   }
 
   if (btnAiAnalyze) btnAiAnalyze.addEventListener("click", handleAiAnalyze);

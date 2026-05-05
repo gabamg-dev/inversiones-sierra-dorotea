@@ -61,7 +61,20 @@ Puntos clave:
 4. Comprueba que **comprobantes** adjuntos en un dispositivo **no** abren en el otro si el archivo no existe en su IndexedDB (esperado hasta Storage).
 
 ### Exportar Excel y asistente IA
-Con sesión Firebase válida, ambos usan **`currentMovements`** cargados desde Firestore (y auditoría remota en Excel cuando aplica).
+Con sesión Firebase válida, ambos usan **`currentMovements`** cargados desde Firestore (y auditoría remota en Excel cuando aplica). El asistente **real** (OpenAI) se ejecuta en `POST /api/ai-assistant` y requiere variables de servidor; ver `docs/10_ASISTENTE_IA.md`.
+
+### Firebase Admin (servidor, Vercel) — lectura/verificación
+Para el endpoint `/api/ai-assistant` (y cualquier lógica server-side) se usa **firebase-admin** con credenciales de **cuenta de servicio** (no el SDK web).
+
+1. En Google Cloud / Firebase Console: **Project settings → Service accounts** → “Generate new private key” (JSON).
+2. **No** subas el JSON al repositorio.
+3. En Vercel → **Settings → Environment Variables**, define:
+   - `FIREBASE_PROJECT_ID` = `project_id` del JSON
+   - `FIREBASE_CLIENT_EMAIL` = `client_email`
+   - `FIREBASE_PRIVATE_KEY` = `private_key` (pega el bloque completo; en Vercel suele ir entre comillas; el código reemplaza `\\n` por saltos de línea reales)
+4. Añade también `OPENAI_API_KEY` y `AI_MODEL` para el asistente.
+
+El servidor verifica el **ID token** del cliente (`Authorization: Bearer`) y solo entonces lee Firestore con privilegio admin.
 
 ### Qué hacer si aparece “usuario no autorizado”
 1. Confirma el **UID** mostrado con el ID del documento en `projectMembers`.

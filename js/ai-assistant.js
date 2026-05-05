@@ -1,3 +1,4 @@
+// Parser local y consultas heurísticas. Con Firebase + Vercel, el flujo principal pasa por POST /api/ai-assistant (OpenAI + Firestore en servidor); este módulo queda como fallback.
 (function () {
   "use strict";
 

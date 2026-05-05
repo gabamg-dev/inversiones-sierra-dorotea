@@ -30,9 +30,14 @@ El proyecto puede desplegarse como sitio estático en Vercel (GitHub → Vercel)
 - **Sin Firebase**: datos **local-first** (`localStorage` + IndexedDB para comprobantes).
 - **Con Firebase**: movimientos y auditoría online en Firestore; comprobantes siguen locales hasta la fase Storage.
 
-Variables:
+Variables (Vercel / servidor):
+- **Cliente (públicas):** `NEXT_PUBLIC_FIREBASE_*` si las inyectas en build (opcional; la app actual también lleva config en `js/firebase-config.js`).
+- **OpenAI (solo servidor):** `OPENAI_API_KEY`, `AI_PROVIDER=openai`, `AI_MODEL` (ej. `gpt-4o-mini` o el que soporte tu cuenta).
+- **Firebase Admin (solo servidor):** `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` — para `/api/ai-assistant` y verificación de tokens; ver `docs/13_FIREBASE_ONLINE_IMPLEMENTACION.md`.
+
+Archivos locales:
 - Usa `.env.example` como plantilla.
-- Crea `.env.local` en tu Mac para valores reales (Firebase) y **no lo subas** (está ignorado por `.gitignore`).
+- Crea `.env.local` en tu Mac para pruebas y **no lo subas** (ignorado por `.gitignore`).
 
 El campo **monto** se escribe con **separador de miles** (puntos) en pantalla; al guardar se almacena como **número** sin formato.
 
@@ -56,12 +61,10 @@ Las secciones principales (Dashboard, Resumen rápido, Gráficos, Registro de mo
   - fechas, tipo, categoría/subcategoría, reparto, estado, método de pago y texto libre.
 - En esta etapa, los filtros **no** cambian el dashboard ni los gráficos (prepara futura “vista filtrada” y exportación filtrada).
 
-### Asistente local del proyecto
-- Panel **“Asistente IA”** con parser determinístico para:
-  - crear **borradores** de movimientos desde texto,
-  - listar **campos obligatorios faltantes**,
-  - responder **consultas locales** (caja actual, gastos por socio, balance mensual, gastos por categoría, sin comprobante).
-- No usa OpenAI/Gemini todavía (sin llamadas externas, sin API keys en frontend).
+### Asistente IA del proyecto
+- **Con Firebase + variables en Vercel:** panel **“Asistente IA”** llama a **`POST /api/ai-assistant`** con el token de Firebase; OpenAI analiza datos reales de Firestore (ver `docs/10_ASISTENTE_IA.md`).
+- **Sin servidor o si falla la petición:** se usa el **parser local** en `js/ai-assistant.js` (sin API keys en el navegador).
+- Flujo siempre: **borrador → revisar → guardar con PIN** (no guardado automático desde IA).
 
 ### Exportación a Excel
 - Botón **“Exportar Excel”** genera un `.xlsx` con hojas de resumen, movimientos y agregaciones.
