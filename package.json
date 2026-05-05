@@ -2,7 +2,12 @@
   "name": "inversiones-sierra-dorotea",
   "private": true,
   "description": "Control financiero — sitio estático + API serverless (Vercel)",
+  "scripts": {
+    "test:deterministic": "node api/_aiDeterministic.test.js"
+  },
   "dependencies": {
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "firebase-admin": "^13.0.2",
     "openai": "^4.77.0"
   }

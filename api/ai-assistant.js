@@ -14,6 +14,8 @@ const {
   CATEGORY_GROUPS_HINT,
 } = require("./_aiContext");
 
+const { postProcessRemoteAiPayload } = require("./_aiDeterministic");
+
 const SYSTEM_PROMPT = `Eres el asistente financiero del proyecto Inversiones Sierra Dorotea (construcción de una vivienda).
 Tienes acceso a datos resumidos de movimientos financieros, auditoría y miembros del proyecto (solo metadata).
 Debes responder en español, ser claro y NO inventar cifras: usa únicamente los datos del contexto para números y listados.
@@ -265,13 +267,27 @@ ${message}`;
 
   const draftNorm = normalizeDraftFromModel(parsed.draft);
 
+  const finalPayload = postProcessRemoteAiPayload(
+    {
+      mode: parsed.mode,
+      message: String(parsed.message || ""),
+      draft: draftNorm,
+      missingRequired: Array.isArray(parsed.missingRequired) ? parsed.missingRequired : [],
+      missingOptional: Array.isArray(parsed.missingOptional) ? parsed.missingOptional : [],
+      warnings: Array.isArray(parsed.warnings) ? parsed.warnings : [],
+    },
+    message,
+    currentDate,
+    timezone
+  );
+
   return res.status(200).json({
     ok: true,
-    mode: parsed.mode,
-    message: String(parsed.message || ""),
-    draft: draftNorm,
-    missingRequired: Array.isArray(parsed.missingRequired) ? parsed.missingRequired : [],
-    missingOptional: Array.isArray(parsed.missingOptional) ? parsed.missingOptional : [],
-    warnings: Array.isArray(parsed.warnings) ? parsed.warnings : [],
+    mode: finalPayload.mode,
+    message: finalPayload.message,
+    draft: finalPayload.draft,
+    missingRequired: finalPayload.missingRequired,
+    missingOptional: finalPayload.missingOptional,
+    warnings: finalPayload.warnings,
   });
 };
